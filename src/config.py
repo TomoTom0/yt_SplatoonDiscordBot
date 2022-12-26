@@ -15,5 +15,5 @@ const_paths = {
     "splat_dir3": f"{dir_path_present}/../s3s"
 }
 
-interval_tmp_str=str(os.environ.get("SPLATOON_interval", 900*8))
+interval_tmp_str=str(os.environ.get("SPLATOON_DISCORD_BOT_INTERVAL: ", 900*8))
 interval=900*8 if not interval_tmp_str.isdecimal() or int(interval_tmp_str) < 900 else int(interval_tmp_str)

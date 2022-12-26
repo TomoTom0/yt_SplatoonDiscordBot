@@ -12,7 +12,7 @@ import config
 
 
 async def main():
-
+    # main
     TOKEN = config.DISCORD_TOKENS["main"]
     extensions_dict = {  # cogの導入
         "main":["ext_splat"]
