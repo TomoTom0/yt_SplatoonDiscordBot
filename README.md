@@ -1,4 +1,4 @@
-# SplatoonDiscordBot
+# yt_SplatoonDiscordBot
 
 Discord Bot on Python for Splatoon with s3s and stat.ink
 
