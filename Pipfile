@@ -11,6 +11,7 @@ requests = "*"
 future = "*"
 msgpack-python = "*"
 beautifulsoup4 = "*"
+discord = "*"
 
 [dev-packages]
 

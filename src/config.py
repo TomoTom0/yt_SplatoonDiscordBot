@@ -1,4 +1,5 @@
 import os
+import discord
 
 # とりあえずHerokuには非対応
 IsHeroku = False
@@ -7,13 +8,79 @@ IsHeroku = False
 DISCORD_TOKENS = {
     "main": os.environ["SPLATOON_DISCORD_BOT_TOKEN"]}
 
-dir_path_present=os.path.dirname(__file__)
+#dir_path_present = os.path.dirname(__file__)
 const_paths = {
-    "tmp_dir": "/tmp" if IsHeroku else f"{dir_path_present}/../configs_s2s",
-    "tmp_dir3": "/tmp" if IsHeroku else f"{dir_path_present}/../configs_s3s",
-    "splat_dir": f"{dir_path_present}/../splatnet2statink",
-    "splat_dir3": f"{dir_path_present}/../s3s"
+    "tmp_dir": "/tmp" if IsHeroku else f"{os.path.dirname(__file__)}/../configs_s2s",
+    "tmp_dir3": "/tmp" if IsHeroku else f"{os.path.dirname(__file__)}/../configs_s3s",
+    "splat_dir": f"{os.path.dirname(__file__)}/../splatnet2statink",
+    "splat_dir3": f"{os.path.dirname(__file__)}/../s3s",
+    "out_root": f"{os.path.dirname(__file__)}/../out/splat_results",
+    "done_root": f"{os.path.dirname(__file__)}/../out/done_results"
 }
 
-interval_tmp_str=str(os.environ.get("SPLATOON_DISCORD_BOT_INTERVAL: ", 900*8))
-interval=900*8 if not interval_tmp_str.isdecimal() or int(interval_tmp_str) < 900 else int(interval_tmp_str)
+
+_interval_tmp_str = str(os.environ.get("SPLATOON_DISCORD_BOT_INTERVAL", 900*8))
+SPLAT_UPLOAD_INTERVAL = 900*8 if not _interval_tmp_str.isdecimal() or int(
+    _interval_tmp_str) < 900 else int(_interval_tmp_str)
+
+
+SPLAT_UPLOAD_IS_TRUE = bool(os.environ.get("SPLATOON_DISCORD_BOT_UPLOAD", True))
+_splatOption3_dict = {True: "-r", False: "-o"}
+SPLAT_OPTION3 = _splatOption3_dict[SPLAT_UPLOAD_IS_TRUE]
+
+intents = discord.Intents.default()
+intents.messages = True
+intents.message_content = True
+
+COMMAND_PREFIX = "?"
+
+# --------------
+
+
+# main
+BOT_MODE = "main"
+DISCORD_TOKEN = DISCORD_TOKENS[BOT_MODE]
+extensions_dict = {  # cogの導入
+    "default": ["ext_splat"]
+}
+
+description = f"stat.inkへ戦績自動アップロードを行うbotです。\nまずはstat.inkのAPI KEYを用意してください。\n" +\
+    "詳しい使い方はこちら -> https://github.com/TomoTom0/yt_SplatoonDiscordBot"
+
+# --------- additional functions -----------
+
+
+async def _additional_on_ready(bot):
+    return
+
+
+async def _additional_on_message_judge(bot, message):
+    flag_continue = True
+    return flag_continue
+
+
+async def _additional_on_message_remake(bot, message):
+    message_new = message
+    return message_new
+
+
+async def _additional_on_message(bot, message):
+    return
+
+
+async def _additional_on_command_error(bot, ctx):
+    return
+
+
+async def _additional_loop(bot):
+    return
+
+additional_functions_dict = {
+    "on_ready": _additional_on_ready,
+    "on_message": _additional_on_message,
+    "on_message_judge": _additional_on_message_judge,
+    "on_message_remake": _additional_on_message_remake,
+    "on_command_error": _additional_on_command_error,
+    "loop": _additional_loop
+}
+# --------------------------------

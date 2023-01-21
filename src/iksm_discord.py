@@ -21,16 +21,21 @@ from distutils.version import StrictVersion
 from bs4 import BeautifulSoup
 
 import config
-GLOBAL_versions_default = {"NSO": "2.2.0", "A": "1.8.2", "S3S":"0.1.5","date": 0}
-GLOBAL_versions_saved = GLOBAL_versions_default
-GLOBAL_splat_dir = config.const_paths["splat_dir"]
-GLOBAL_tmp_dir = config.const_paths["tmp_dir"]
-GLOBAL_splat_dir3 = config.const_paths["splat_dir3"]
-GLOBAL_tmp_dir3 = config.const_paths["tmp_dir3"]
-GLOBAL_isHeroku = config.IsHeroku
+GLOBAL_VERSIONS_DEFAULT = {"NSO": "2.2.0",
+                           "A": "1.8.2", "S3S": "0.1.5", "date": 0}
+GLOBAL_VERSIONS_SAVED = GLOBAL_VERSIONS_DEFAULT
+GLOBAL_SPLAT_DIR = config.const_paths.get("splat_dir", None)
+GLOBAL_TMP_DIR = config.const_paths.get("tmp_dir", None)
+GLOBAL_SPLAT_DIR3 = config.const_paths.get("splat_dir3", None)
+GLOBAL_TMP_DIR3 = config.const_paths.get("tmp_dir3", None)
+GLOBAL_OUT_ROOT = config.const_paths.get("out_root", None)
+GLOBAL_DONE_ROOT = config.const_paths.get("done_root", None)
+GLOBAL_ISHEROKU = config.IsHeroku
+GLOBAL_SPLAT_OPTION3 = config.splatOption3
+GLOBAL_SPLAT_UPLOADISTRUE = config.splatUploadIsTrue
 
 GLOBAL_SPLATNET3_URL = "https://api.lp1.av5ja.srv.nintendo.net"
-GLOBAL_GRAPHQL_URL  = "https://api.lp1.av5ja.srv.nintendo.net/api/graphql"
+GLOBAL_GRAPHQL_URL = "https://api.lp1.av5ja.srv.nintendo.net/api/graphql"
 GLOBAL_WEB_VIEW_VERSION = "1.0.0-d3a90678"
 
 # # functions
@@ -46,25 +51,25 @@ def decomposeKey(key=""):
 
 def obtainAccNames():
     name_keys = []
-    if GLOBAL_isHeroku is True:  # for Heroku
+    if GLOBAL_ISHEROKU is True:  # for Heroku
         before_config_tmp = json.loads(os.getenv("iksm_configs", "{}"))
         before_config_jsons = eval(before_config_tmp) if isinstance(
             before_config_tmp, str) else before_config_tmp
         name_keys = list(before_config_jsons.keys())
     else:
         name_keys = [path.replace("_config.txt", "") for path in os.listdir(
-            GLOBAL_tmp_dir) if path.endswith("_config.txt")]
+            GLOBAL_TMP_DIR) if path.endswith("_config.txt")]
     return [decomposeKey(s) for s in name_keys]
 
 
 def obtainAccInfo(acc_name_key: str):
-    if GLOBAL_isHeroku:
+    if GLOBAL_ISHEROKU:
         before_config_tmp = json.loads(os.getenv("iksm_configs", "{}"))
         before_config_jsons = eval(before_config_tmp) if isinstance(
             before_config_tmp, str) else before_config_tmp
         json_file = before_config_jsons[acc_name_key]
     else:
-        with open(f"{GLOBAL_tmp_dir}/{acc_name_key}_config.txt", "r") as f:
+        with open(f"{GLOBAL_TMP_DIR}/{acc_name_key}_config.txt", "r") as f:
             json_file = json.loads(f.read())
     return json_file
 
@@ -103,11 +108,44 @@ async def checkAcc(ctx: commands.Context, acc_name: str):
         await ctx.channel.send(f"`{acc_name}` is not registered.")
         return {"name": ""}
 
+# upload functions
 
-async def auto_upload_iksm():
+
+async def _asyncio_run(cmd):
+    proc = await asyncio.create_subprocess_shell(
+        cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE)
+
+    stdout, stderr = await proc.communicate()
+
+    print(f"[{cmd!r} exited with {proc.returncode}]")
+    if stdout:
+        print(f"[stdout]\n{stdout.decode()}")
+    if stderr:
+        print(f"[stderr]\n{stderr.decode()}")
+
+
+async def _upload_iksm(config_name, config_dir, config_tmp_dir, splat_script, splat_option):
+    # print(config_name)
+    shutil.copy(f"{config_dir}/{config_name}",
+                f"{config_tmp_dir}/config.txt")
+    with open(f"{config_tmp_dir}/config.txt") as f:
+        config_json = json.load(f)
+    api_key = config_json["api_key"]
+    if api_key in ["0"*43, "skip", ""]:  # API_KEY is not setted
+        return
+    cmd = " ".join(["python3", splat_script, splat_option])
+    await _asyncio_run(cmd)
+    shutil.copy(f"{config_tmp_dir}/config.txt",
+                f"{config_dir}/{config_name}")
+    return True
+
+
+async def auto_upload_iksm(fromLocal=False):
     # auto upload
-    splat_path = GLOBAL_splat_dir
-    if GLOBAL_isHeroku is True:  # for Heroku
+    splat_path = GLOBAL_SPLAT_DIR
+    if False:  # GLOBAL_ISHEROKU is True:  # for Heroku
         before_config_tmp = json.loads(os.getenv("iksm_configs", "{}"))
         before_config_jsons = eval(before_config_tmp) if isinstance(
             before_config_tmp, str) else before_config_tmp
@@ -115,98 +153,118 @@ async def auto_upload_iksm():
             if v["api_key"] in ["0"*43, "skip"]:  # API_KEY is not setted
                 continue
             # make config from ENV
-            with open(f"{GLOBAL_tmp_dir}/config.txt", "w") as f:
+            with open(f"{GLOBAL_TMP_DIR}/config.txt", "w") as f:
                 json.dump(v, f)
             subprocess.run(
                 ["python3", f"{splat_path}/splatnet2statink.py", "-r"])
-            with open(f"{GLOBAL_tmp_dir}/config.txt") as f:
+            with open(f"{GLOBAL_TMP_DIR}/config.txt") as f:
                 v = json.load(f)
             before_config_jsons[acc_name] = v
     else:  # for not Heroku
-        async def _asyncio_run(cmd):
-            proc = await asyncio.create_subprocess_shell(
-                cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE)
-
-            stdout, stderr = await proc.communicate()
-
-            print(f"[{cmd!r} exited with {proc.returncode}]")
-            if stdout:
-                print(f"[stdout]\n{stdout.decode()}")
-            if stderr:
-                print(f"[stderr]\n{stderr.decode()}")
-        async def _upload_iksm(config_name, config_dir, config_tmp_dir, splat_script, splat_option):
-            #print(config_name)
-            shutil.copy(f"{config_dir}/{config_name}",
-                        f"{config_tmp_dir}/config.txt")
-            with open(f"{config_tmp_dir}/config.txt") as f:
-                config_json = json.load(f)
-            api_key = config_json["api_key"]
-            if api_key in ["0"*43, "skip", ""]:  # API_KEY is not setted
-                return
-            cmd=" ".join(["python3", splat_script, splat_option])
-            await _asyncio_run(cmd)
-            shutil.copy(f"{config_tmp_dir}/config.txt",
-                        f"{config_dir}/{config_name}")
         config_names = [path for path in os.listdir(
-            GLOBAL_tmp_dir3) if path.endswith("_config.txt")]
+            GLOBAL_TMP_DIR3) if path.endswith("_config.txt")]
         for config_name in config_names:
-            acc_name_key=config_name.replace("_config.txt", "")
+            acc_name_key = config_name.replace("_config.txt", "")
             print(f"\n{acc_name_key}\n")
 
             # for s2s
-            #_upload_iksm(config_name, GLOBAL_tmp_dir, GLOBAL_tmp_dir, f"{GLOBAL_splat_dir}/splatnet2statink.py", "-r")
+            # _upload_iksm(config_name, GLOBAL_TMP_DIR, GLOBAL_TMP_DIR, f"{GLOBAL_SPLAT_DIR}/splatnet2statink.py", "-r")
             # for s3s
-            out_root="./out/splat_results"
-            if GLOBAL_isHeroku is True:
-                continue
-            for dirName in glob2.glob(f"./export-*"):
-                shutil.move(dirName, out_root+"/escape")
-            try_count=0
-            out_dir=f"{out_root}/{acc_name_key}"
 
-            os.makedirs(out_dir, exist_ok=True)
-            while try_count < 3:
-                await _upload_iksm(config_name, GLOBAL_tmp_dir3, GLOBAL_splat_dir3, f"{GLOBAL_splat_dir3}/s3s.py", "-o")
-                export_dirs=glob2.glob(f"./export-*")
-                #print(glob2.glob(f"./export-*"), glob2.glob(f"./{GLOBAL_splat_dir3}/export-*"))
-                if len(export_dirs)== 0:
-                    try_count+=1
-                    continue
-                for dirName in export_dirs:
-                    shutil.move(dirName, out_dir)
-                break
+            # if GLOBAL_ISHEROKU is True:
+            #    continue
+
+            if GLOBAL_SPLAT_UPLOADISTRUE or fromLocal is True:
+
+                out_root = GLOBAL_OUT_ROOT
+                done_root = GLOBAL_DONE_ROOT
+                for tmp_dirPath in [out_root, done_root]:
+                    os.makedirs(tmp_dirPath, exist_ok=True)
+
+                for dirName in glob2.glob(f"./export-*"):
+                    shutil.move(dirName, out_root+"/escape")
+
+                out_dir = f"{out_root}/{acc_name_key}"
+
+            # upload jsons to stat.ink
+            if fromLocal is True:
+                out_dirPaths = glob2.glob(f"{out_dir}/export-*")
+                for out_dirPath in out_dirPaths:
+                    done_dirPath = done_root+"/"+os.path.basename(out_dirPath)
+                    try_count = 0
+                    while try_count < 3:
+                        json_check_dict = {
+                            s: os.path.isfile(out_dirPath+"/"+s) for s in ["results.json", "coop_results.json", "overview.json"]
+                        }
+                        json_args_0 = ([
+                            out_dirPath+"/"+s for s in ["results.json", "coop_results.json"]
+                            if json_check_dict.get(s, False)]+[None])[0]
+                        json_args_1 = ([
+                            out_dirPath+"/"+s for s in ["overview.json"]
+                            if json_check_dict.get(s, False)]+[None])[0]
+                        if json_args_0 is None or json_args_1 is None:
+                            print(
+                                f"There is something wrong with {os.path.basename(out_dirPath)}'s jsons")
+                            shutil.move(out_dirPath, done_dirPath)
+                            break
+                        splat_option_manual = f"-i \"{json_args_0}\" \"{json_args_1}\""
+                        success = await _upload_iksm(config_name, GLOBAL_TMP_DIR3, GLOBAL_SPLAT_DIR3, f"{GLOBAL_SPLAT_DIR3}/s3s.py", splat_option_manual)
+                        if success is True:
+                            if os.path.isfile(done_dirPath):
+                                os.remove(done_dirPath)
+                            shutil.move(out_dirPath, done_dirPath)
+                            break
+                    sys.stdout.flush()
+                return
+            else:
+                # default
+                try_count = 0
+                while try_count < 3:
+                    await _upload_iksm(config_name, GLOBAL_TMP_DIR3, GLOBAL_SPLAT_DIR3, f"{GLOBAL_SPLAT_DIR3}/s3s.py", GLOBAL_SPLAT_OPTION3)
+                    if GLOBAL_SPLAT_UPLOADISTRUE:
+                        os.makedirs(out_dir, exist_ok=True)
+                        export_dirs = glob2.glob(f"./export-*")
+                        # print(glob2.glob(f"./export-*"), glob2.glob(f"./{GLOBAL_SPLAT_DIR3}/export-*"))
+                        if len(export_dirs) == 0:
+                            try_count += 1
+                            continue
+                        for dirName in export_dirs:
+                            shutil.move(dirName, out_dir)
+                    break
+            sys.stdout.flush()
         # if len(config_names)!=0:
-        #	os.remove(f"{GLOBAL_tmp_dir}/config.txt")
+        # os.remove(f"{GLOBAL_TMP_DIR}/config.txt")
+
 
 def obtain_nextInterval(interval):
-    interval_tmp_str=str(interval)
-    interval_valid=900*8 if not interval_tmp_str.isdecimal() or \
+    interval_tmp_str = str(interval)
+    interval_valid = 900*8 if not interval_tmp_str.isdecimal() or \
         int(interval_tmp_str) < 900 else int(interval_tmp_str)
     nowtime = datetime.datetime.now()
     target_time_tmp = interval_valid + nowtime.minute*60 + nowtime.second
     next_interval = interval_valid - target_time_tmp % 900
     return next_interval
 
-async def autoUpload_OneCycle(interval=900, execute=True):
-    #config_dir = GLOBAL_tmp_dir if GLOBAL_isHeroku else GLOBAL_splat_dir
-    #config_path = config_dir+"/config.txt"
-    #if not os.path.isfile(config_path):
+
+async def autoUpload_OneCycle(interval=900*8, execute=True):
+    # config_dir = GLOBAL_TMP_DIR if GLOBAL_ISHEROKU else GLOBAL_SPLAT_DIR
+    # config_path = config_dir+"/config.txt"
+    # if not os.path.isfile(config_path):
     #    with open(config_path, "w") as f:
     #        f.write(json.dumps({}))
     nowtime = datetime.datetime.now()
     if execute is True:
         await auto_upload_iksm()
-        #pass
-    next_interval=obtain_nextInterval(interval)
+        # pass
+    next_interval = obtain_nextInterval(interval)
     print(f"{nowtime} / Next Iksm Check : in {next_interval} sec")
     return next_interval
 
-async def autoUploadCycle_old(next_time=900):
-    #config_dir = GLOBAL_tmp_dir if GLOBAL_isHeroku else GLOBAL_splat_dir
-    #config_path = config_dir+"/config.txt"
-    #if not os.path.isfile(config_path):
+
+async def autoUploadCycle_old(next_time=900*8324496):
+    # config_dir = GLOBAL_TMP_DIR if GLOBAL_ISHEROKU else GLOBAL_SPLAT_DIR
+    # config_path = config_dir+"/config.txt"
+    # if not os.path.isfile(config_path):
     #    with open(config_path, "w") as f:
     #        f.write(json.dumps({}))
     nowtime = datetime.datetime.now()
@@ -232,8 +290,8 @@ class makeConfig():
         self.USER_LANG = "ja-JP"
         self.session = requests.Session()
         self.ctx = None
-        self.isHeroku = GLOBAL_isHeroku
-        self.config_dir = GLOBAL_tmp_dir
+        self.isHeroku = GLOBAL_ISHEROKU
+        self.config_dir = GLOBAL_TMP_DIR
 
     # ## obtain versions
     """def obtainGitHubContent(self, user: str, repo: str, path: str):
@@ -249,16 +307,16 @@ class makeConfig():
         return base64.b64decode(content).decode()"""
 
     def obtainVersions(self):
-        global GLOBAL_versions_saved
+        global GLOBAL_VERSIONS_SAVED
         # update check
         time_now = time.time()
-        old_versions = GLOBAL_versions_saved
+        old_versions = GLOBAL_VERSIONS_SAVED
 
         if time_now - old_versions["date"] < 6 * 3600:
             return old_versions
 
         versions = {"date": time_now}
-        versions_default = GLOBAL_versions_default
+        versions_default = GLOBAL_VERSIONS_DEFAULT
         try:
             # NSO_VERSION
             # from Ninendo Home page
@@ -273,8 +331,8 @@ class makeConfig():
             # A_VERSION
             repoInfo_splat = {"user": "frozenpandaman",
                               "repo": "splatnet2statink", "path": "splatnet2statink.py"}
-            #splat_content = self.obtainGitHubContent(**repoInfo_splat)
-            #A_lines = re.findall(r"(?<=A_VERSION).*\d+\.\d+\.\d+.*", splat_content)
+            # splat_content = self.obtainGitHubContent(**repoInfo_splat)
+            # A_lines = re.findall(r"(?<=A_VERSION).*\d+\.\d+\.\d+.*", splat_content)
 
             def obtainGitHubUrl(user, repo, path):
                 return f"https://github.com/{user}/{repo}/blob/master/{path}"
@@ -284,12 +342,12 @@ class makeConfig():
                 r"A_VERSION.*&quot;\d+\.\d+\.\d+&quot;", res_splat.text)
             versions["A"] = re.findall(
                 r"\d+\.\d+\.\d+", A_lines[0])[0] if len(A_lines) > 0 else versions_default["A"]
-            
+
             # S3S_VERSION
             repoInfo_splat = {"user": "frozenpandaman",
                               "repo": "s3s", "path": "s3s.py"}
-            #splat_content = self.obtainGitHubContent(**repoInfo_splat)
-            #A_lines = re.findall(r"(?<=A_VERSION).*\d+\.\d+\.\d+.*", splat_content)
+            # splat_content = self.obtainGitHubContent(**repoInfo_splat)
+            # A_lines = re.findall(r"(?<=A_VERSION).*\d+\.\d+\.\d+.*", splat_content)
 
             def obtainGitHubUrl(user, repo, path):
                 return f"https://github.com/{user}/{repo}/blob/master/{path}"
@@ -303,7 +361,7 @@ class makeConfig():
         except Exception as e:
             versions = versions_default
 
-        GLOBAL_versions_saved = versions
+        GLOBAL_VERSIONS_SAVED = versions
         return versions
 
     async def send_msg(self, content: str, isError=False):
@@ -371,11 +429,11 @@ class makeConfig():
 
         config_data = {"api_key": API_KEY, "cookie": new_cookie,
                        "user_lang": userLang, "session_token": new_token}
-        config_data_s3s={"api_key": API_KEY, "cookie": new_cookie,
-                       "acc_loc": f"{userLang}|{userLang[-2:]}",
-                        "session_token": new_token,
-                       "f_gen": "https://api.imink.app/f",
-                       "gtoken":self.gtoken, "bullettoken":self.bullet_token}
+        config_data_s3s = {"api_key": API_KEY, "cookie": new_cookie,
+                           "acc_loc": f"{userLang}|{userLang[-2:]}",
+                           "session_token": new_token,
+                           "f_gen": "https://api.imink.app/f",
+                           "gtoken": self.gtoken, "bullettoken": self.bullet_token}
         # save config
         time_10 = format(int(time.time()), "010")
         if self.isHeroku is True:  # for Heroku
@@ -391,7 +449,7 @@ class makeConfig():
             config.update_env({"iksm_configs": json.dumps(json_configs)})
         else:  # for not Heroku
             # s3s
-            with open(f"{GLOBAL_tmp_dir3}/{acc_name}_{time_10}_config.txt", "w") as f:
+            with open(f"{GLOBAL_TMP_DIR3}/{acc_name}_{time_10}_config.txt", "w") as f:
                 f.write(json.dumps(config_data_s3s, indent=4,
                                    sort_keys=True, separators=(",", ": ")))
             # s2s
@@ -454,7 +512,6 @@ class makeConfig():
 
     # ##  -------get_cookie------
 
-
     async def get_cookie_discord(self, session_token):
         """Returns a new cookie provided the session_token."""
 
@@ -479,7 +536,7 @@ class makeConfig():
         }
 
         body = {
-            "client_id":     "71b963c1b7b6d119", # Splatoon 2 service
+            "client_id":     "71b963c1b7b6d119",  # Splatoon 2 service
             "session_token": session_token,
             "grant_type":    "urn:ietf:params:oauth:grant-type:jwt-bearer-session-token"
         }
@@ -518,8 +575,8 @@ class makeConfig():
         self.user_info = user_info
 
         nickname = user_info["nickname"]
-        user_lang     = user_info["language"]
-        user_country  = user_info["country"]
+        user_lang = user_info["language"]
+        user_country = user_info["country"]
 
         # get access token
         # step3: splatoon token
@@ -562,7 +619,7 @@ class makeConfig():
             "language":   user_info["language"]
         }
 
-        body={"parameter": parameter}
+        body = {"parameter": parameter}
 
         url = "https://api-lp1.znc.srv.nintendo.net/v3/Account/Login"
 
@@ -630,7 +687,7 @@ class makeConfig():
             "User-Agent":              "Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Mobile Safari/537.36",
             "X-Requested-With":        "com.nintendo.znca"
         }
-            
+
         url = "https://app.splatoon2.nintendo.net/?lang={}".format(userLang)
         r = requests.get(url, headers=app_head)
 
@@ -657,31 +714,30 @@ class makeConfig():
             "requestId":         uuid,
             "timestamp":         timestamp
         }
-        body={"parameter": parameter}
+        body = {"parameter": parameter}
 
         url = "https://api-lp1.znc.srv.nintendo.net/v2/Game/GetWebServiceToken"
         r = requests.post(url, headers=app_head, json=body)
         web_service_resp = json.loads(r.text)
-        web_service_token = web_service_resp.get("result", {}).get("accessToken", None)
+        web_service_token = web_service_resp.get(
+            "result", {}).get("accessToken", None)
         if web_service_token is None:
-            print_content="Error from Nintendo (in Game/GetWebServiceToken step):\n"+\
+            print_content = "Error from Nintendo (in Game/GetWebServiceToken step):\n" +\
                 json.dumps(web_service_resp, indent=2)
             await self.send_msg(print_content)
             return
 
-        self.gtoken=web_service_token
+        self.gtoken = web_service_token
 
         # step8: obtain bullet token
         APP_USER_AGENT = "Mozilla/5.0 (Linux; Android 11; Pixel 5) " \
             "AppleWebKit/537.36 (KHTML, like Gecko) " \
             "Chrome/94.0.4606.61 Mobile Safari/537.36"
-        user_country=user_info["country"]
-        user_lang=user_info["language"]
+        user_country = user_info["country"]
+        user_lang = user_info["language"]
         bullet_token = await self.get_bullet_discord(web_service_token,
-            self.get_web_view_ver(), APP_USER_AGENT, user_lang, user_country)
-        self.bullet_token=bullet_token
-
-           
+                                                     self.get_web_view_ver(), APP_USER_AGENT, user_lang, user_country)
+        self.bullet_token = bullet_token
 
     async def get_cookie_discord_old(self, session_token):
         """Returns a new cookie provided the session_token."""
@@ -763,7 +819,7 @@ class makeConfig():
         }
 
         # step3-1: flapg api
-        #flapg_nso = await self.call_flapg_api_discord(idToken, guid, timestamp, "nso")
+        # flapg_nso = await self.call_flapg_api_discord(idToken, guid, timestamp, "nso")
         flapg_nso, uuid, timestamp = await self.call_imink_api(idToken, 1)
 
         keysAreNotExisting = not all([
@@ -801,7 +857,7 @@ class makeConfig():
                                 json.dumps(splatoon_token, indent=2))
             return
         # step4-1: flapg api
-        #flapg_app = await self.call_flapg_api_discord(splat_idToken, guid, timestamp, "app")
+        # flapg_app = await self.call_flapg_api_discord(splat_idToken, guid, timestamp, "app")
         flapg_app, uuid, timestamp = await self.call_imink_api(idToken, 2)
 
         # get splatoon access token
@@ -903,7 +959,7 @@ class makeConfig():
 
     async def call_imink_api_discord(self, id_token, step):
         """Passes in an naIdToken to the imink API and fetches the response (comprised of an f token, UUID, and timestamp)."""
-        A_VERSION=self.versions["A"]
+        A_VERSION = self.versions["A"]
         api_head = {
             "User-Agent":   f"splatnet2statink/{A_VERSION}",
             "Content-Type": "application/json; charset=utf-8"
@@ -912,7 +968,8 @@ class makeConfig():
             "token":       id_token,
             "hashMethod":  step
         }
-        api_response = requests.post("https://api.imink.app/f", data=json.dumps(api_body), headers=api_head)
+        api_response = requests.post(
+            "https://api.imink.app/f", data=json.dumps(api_body), headers=api_head)
         resp = json.loads(api_response.text)
 
         f = resp["f"]
@@ -920,6 +977,7 @@ class makeConfig():
         timestamp = resp["timestamp"]
         return f, uuid, timestamp
     # use for discord -> call_imink_api
+
     async def call_flapg_api_discord(self, id_token, guid, timestamp, typeIn):
         """Passes in headers to the flapg API (Android emulator) and fetches the response."""
         A_VERSION = self.versions["A"]
@@ -964,7 +1022,7 @@ class makeConfig():
         url = "https://elifessler.com/s2s/api/gen2"
         api_response = requests.post(
             url, headers=api_app_head, data=api_body)
-        #print(api_response.ok, api_response.content)
+        # print(api_response.ok, api_response.content)
         if not api_response.ok:
             print(api_response.text)
             return None
@@ -985,18 +1043,17 @@ class makeConfig():
         main_js_url = SPLATNET3_URL + main_js.attrs["src"]
         main_js_body = requests.get(main_js_url)
 
-        match = re.search(r"\b(\d+\.\d+\.\d+)\b-\".concat.*?\b([0-9a-f]{40})\b", main_js_body.text)
+        match = re.search(
+            r"\b(\d+\.\d+\.\d+)\b-\".concat.*?\b([0-9a-f]{40})\b", main_js_body.text)
         if not match:
             return WEB_VIEW_VERSION
 
         version, revision = match.groups()
         return f"{version}-{revision[:8]}"
 
-
     async def get_bullet_discord(self, web_service_token, web_view_ver, app_user_agent, user_lang, user_country):
         """Returns a bulletToken."""
         NSO_VERSION = self.versions["NSO"]
-
 
         app_head = {
             "Content-Length":   "0",
@@ -1010,26 +1067,30 @@ class makeConfig():
             "X-Requested-With": "com.nintendo.znca"
         }
         app_cookies = {
-            "_gtoken": web_service_token # X-GameWebToken
+            "_gtoken": web_service_token  # X-GameWebToken
         }
         url = "https://api.lp1.av5ja.srv.nintendo.net/api/bullet_tokens"
         r = requests.post(url, headers=app_head, cookies=app_cookies)
 
-        error_message_dict={
-            401:"Unauthorized error (ERROR_INVALID_GAME_WEB_TOKEN). Cannot fetch tokens at this time.",
-            403:"Forbidden error (ERROR_OBSOLETE_VERSION). Cannot fetch tokens at this time.",
-            204:"Cannot access SplatNet 3 without having played online."
+        error_message_dict = {
+            401: "Unauthorized error (ERROR_INVALID_GAME_WEB_TOKEN). Cannot fetch tokens at this time.",
+            403: "Forbidden error (ERROR_OBSOLETE_VERSION). Cannot fetch tokens at this time.",
+            204: "Cannot access SplatNet 3 without having played online."
         }
-        error_message=error_message_dict.get(r.status_code, None)
+        error_message = error_message_dict.get(r.status_code, None)
         if error_message is not None:
             await self.send_msg(error_message)
             return None
         bullet_resp = json.loads(r.text)
         bullet_token = bullet_resp.get("bulletToken", None)
         if bullet_token is None:
-            print_content="Error from Nintendo (in api/bullet_tokens step):\n"+\
+            print_content = "Error from Nintendo (in api/bullet_tokens step):\n" +\
                 json.dumps(bullet_resp, indent=2)
             await self.send_msg(print_content)
             return None
 
         return bullet_token
+
+
+if __name__ == "__main__":
+    asyncio.run(auto_upload_iksm())

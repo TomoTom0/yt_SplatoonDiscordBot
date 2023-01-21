@@ -9,10 +9,10 @@ import iksm_discord
 import traceback
 import asyncio
 
-#from discord_slash import cog_ext, SlashContext
+# from discord_slash import cog_ext, SlashContext
 
 import config
-guild_ids=config.guild_ids
+guild_ids = config.guild_ids
 
 config_dir = config.const_paths["tmp_dir"]
 config_dir3 = config.const_paths["tmp_dir3"]
@@ -44,12 +44,12 @@ class Splat(commands.Cog):
                 str(num+1) for num in range(len(acc_name_sets))]
             contentIsValid = contentIsCommand or contentIsValidInt
             return authorIsValid and contentIsValid
-        content=f"Select the account with the number(`1-{len(acc_name_sets)}`)\n"+\
+        content = f"Select the account with the number(`1-{len(acc_name_sets)}`)\n" +\
             "If you want to cancel the command, please input `stop`"
         await ctx.send(content)
         try:
             input_msg = await ctx.bot.wait_for("message", check=check_msg, timeout=600)
-            if input_msg.content=="stop":
+            if input_msg.content == "stop":
                 await ctx.channel.send("The command has been canceled.")
                 return None
             acc_name_set = acc_name_sets[int(input_msg.content)-1]
@@ -94,7 +94,7 @@ class Splat(commands.Cog):
         # try:
         try:
             print(STAT_INK_API_KEY)
-            makeConfig=iksm_discord.makeConfig()
+            makeConfig = iksm_discord.makeConfig()
             acc_name = await makeConfig.make_config_discord(STAT_INK_API_KEY, ctx)
             if acc_name is None:
                 await ctx.send("エラーが発生しました。詳細はbotのログを確認してください。")
@@ -122,7 +122,7 @@ class Splat(commands.Cog):
             acc_name_set = await self.waitInputAcc(ctx)
             if acc_name_set is None:
                 return
-            acc_name=acc_name_set["name"]
+            acc_name = acc_name_set["name"]
         else:
             acc_name_set = await iksm_discord.checkAcc(ctx, acc_name)
             if acc_name_set["name"] == "":
@@ -190,12 +190,15 @@ class Splat(commands.Cog):
         """ただちにstat.inkへ戦績をアップロードします。"""
         await ctx.send("stat.inkへのアップロードを開始します。")
         await iksm_discord.auto_upload_iksm()
-        await ctx.send("完了しました。")
+        await ctx.send("バックグラウンドで処理しています。詳細はログを確認してください。")
 
-    '''@cog_ext.cog_slash(name="upIksm", guild_ids=guild_ids, description="upload results to stat.ink immediately")
-    async def _slash_upIksm(self, ctx: SlashContext):
-        """ただちにstat.inkへ戦績をアップロードします。"""
-        await self.upIksm(ctx)'''
+    @commands.command(description="", pass_context=True)
+    async def upIksmFromLocal(self, ctx):
+        """Localに保存されていた戦績のjsonファイルをstat.inkへアップロードします。"""
+        await ctx.send("stat.inkへ戦績jsonファイルのアップロードを開始します。")
+        await iksm_discord.auto_upload_iksm(fromLocal=True)
+        await ctx.send("バックグラウンドで処理しています。詳細はログを確認してください。")
+
 
 async def setup(bot):
     await bot.add_cog(Splat(bot))
