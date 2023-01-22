@@ -10,8 +10,8 @@ DISCORD_TOKENS = {
 
 #dir_path_present = os.path.dirname(__file__)
 const_paths = {
-    "tmp_dir": "/tmp" if IsHeroku else f"{os.path.dirname(__file__)}/../configs_s2s",
-    "tmp_dir3": "/tmp" if IsHeroku else f"{os.path.dirname(__file__)}/../configs_s3s",
+    "config_dir": "/tmp" if IsHeroku else f"{os.path.dirname(__file__)}/../configs_s2s",
+    "config_dir3": "/tmp" if IsHeroku else f"{os.path.dirname(__file__)}/../configs_s3s",
     "splat_dir": f"{os.path.dirname(__file__)}/../splatnet2statink",
     "splat_dir3": f"{os.path.dirname(__file__)}/../s3s",
     "out_root": f"{os.path.dirname(__file__)}/../out/splat_results",

@@ -14,8 +14,8 @@ import asyncio
 import config
 guild_ids = config.guild_ids
 
-config_dir = config.const_paths["tmp_dir"]
-config_dir3 = config.const_paths["tmp_dir3"]
+config_dir = config.const_paths["config_dir"]
+config_dir3 = config.const_paths["config_dir3"]
 
 
 class Splat(commands.Cog):
@@ -110,9 +110,6 @@ class Splat(commands.Cog):
             f"\t\t`{acc_name}`\n" +\
             ("\nこの後botは再起動されます。次の操作はしばらくお待ちください。" if config.IsHeroku else "")
         await ctx.channel.send(success_message)
-        # except Exception as e:
-        #    error_message = f"エラーが発生しました。\n{traceback.format_exc()}"
-        #    await ctx.channel.send(error_message)
 
     # check
     @commands.command(description="", pass_context=True)
@@ -128,6 +125,8 @@ class Splat(commands.Cog):
             if acc_name_set["name"] == "":
                 return
         acc_info = iksm_discord.obtainAccInfo(acc_name_set["key"])
+        if acc_info is None:
+            await ctx.channel.send(f"`{acc_name}` is not regitered or cannot be seen")
         await ctx.channel.send(f"`{acc_name}`'s iksm_session is following:\n")
         await ctx.channel.send(acc_info["session_token"])
 
@@ -177,7 +176,8 @@ class Splat(commands.Cog):
     @commands.command(description="", pass_context=True)
     async def showIksm(self, ctx: commands.Context):
         """登録されているnintendoアカウント一覧を表示します。"""
-        acc_name_sets = iksm_discord.obtainAccNames()
+        access_info={"check":True, "type":"guild", "id":11}
+        acc_name_sets = iksm_discord.obtainAccNames(access_info=access_info)
         content = f"{len(acc_name_sets)} accounts are registered:\n" +\
             "\t\t"+"\n\t\t".join([
                 "**{}** :\t`{}`\t\ton {}".format(
@@ -186,17 +186,20 @@ class Splat(commands.Cog):
         await ctx.channel.send(content)
 
     @commands.command(description="", pass_context=True)
-    async def upIksm(self, ctx):
+    async def upIksm(self, ctx: commands.Context, acc_name=""):
         """ただちにstat.inkへ戦績をアップロードします。"""
         await ctx.send("stat.inkへのアップロードを開始します。")
-        await iksm_discord.auto_upload_iksm()
+        acc_name_set = await iksm_discord.checkAcc(ctx, acc_name)
+        print(acc_name_set)
+        await iksm_discord.auto_upload_iksm(fromLocal=False, acc_name_key_in=acc_name_set.get("key", None))
         await ctx.send("バックグラウンドで処理しています。詳細はログを確認してください。")
 
     @commands.command(description="", pass_context=True)
-    async def upIksmFromLocal(self, ctx):
+    async def upIksmFromLocal(self, ctx: commands.Context, acc_name=""):
         """Localに保存されていた戦績のjsonファイルをstat.inkへアップロードします。"""
         await ctx.send("stat.inkへ戦績jsonファイルのアップロードを開始します。")
-        await iksm_discord.auto_upload_iksm(fromLocal=True)
+        acc_name_set = await iksm_discord.checkAcc(ctx, acc_name)
+        await iksm_discord.auto_upload_iksm(fromLocal=True, acc_name_key_in=acc_name_set.get("key", None))
         await ctx.send("バックグラウンドで処理しています。詳細はログを確認してください。")
 
 

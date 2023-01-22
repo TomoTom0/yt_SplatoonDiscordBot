@@ -38,6 +38,7 @@ async def main():
     async def on_ready():
         await additional_functions_dict.get("on_ready", _empty_func)(bot)
         print(f"Logged in as\n{bot.user.name}\n{bot.user.id}\n------")
+        sys.stdout.flush()
 
     # メッセージ受信時に動作する処理
     @bot.event
@@ -77,6 +78,7 @@ async def main():
         except Exception as e:
             exc = f"{e}: {e.args}"
             print(f"Failed to load extension {extension}\n{exc}")
+    sys.stdout.flush()
 
 
     @tasks.loop(seconds=SPLAT_UPLOAD_INTERVAL)
@@ -84,12 +86,14 @@ async def main():
         await additional_functions_dict.get("loop", _empty_func)(bot)
         next_interval = await iksm_discord.autoUpload_OneCycle(SPLAT_UPLOAD_INTERVAL)
         loop.change_interval(seconds=next_interval)
+        sys.stdout.flush()
 
     @loop.before_loop
     async def wait_for_loop():
         nowtime = datetime.datetime.now()
         next_interval = iksm_discord.obtain_nextInterval(SPLAT_UPLOAD_INTERVAL)
         print(f"{nowtime} / Next Splatoon Results Check : in {next_interval} sec")
+        sys.stdout.flush()
         await asyncio.sleep(next_interval)
 
     if "main" in BOT_MODE:
