@@ -33,6 +33,7 @@ GLOBAL_DONE_ROOT = config.const_paths.get("done_root", None)
 GLOBAL_ISHEROKU = config.IsHeroku
 GLOBAL_SPLAT_OPTION3 = config.SPLAT_OPTION3
 GLOBAL_SPLAT_UPLOADISTRUE = config.SPLAT_UPLOAD_IS_TRUE
+GLOBAL_ACCESS_JSON_PATH = config.const_paths.get("access_json_path", None)
 
 GLOBAL_SPLATNET3_URL = "https://api.lp1.av5ja.srv.nintendo.net"
 GLOBAL_GRAPHQL_URL = "https://api.lp1.av5ja.srv.nintendo.net/api/graphql"
@@ -49,12 +50,69 @@ def decomposeKey(key=""):
     }
 
 
+def checkAccessInfo(acc_name_key_in="", access_info={}):
+    if access_info.get("check", False) is False:
+        return True
+    acc_info = obtainAccInfo(acc_name_key=acc_name_key_in, access_info={})
+    if acc_info is None:
+        return False
+    access_json_path = GLOBAL_ACCESS_JSON_PATH
+    if not os.path.exists(access_json_path):
+        with open(access_json_path, "w") as f:
+            json.dump({"body":{}, "old_body":{}}, f, indent=4)
+        
+    with open(access_json_path, "r") as f:
+        json_read = json.load(f)
+    json_body = json_read.get("body", {})
+    json_info = json_body.get(acc_name_key_in, {})
+    access_place = access_info.get("place", None)
+    access_id = access_info.get("id", None)
+    json_ids = json_info.get(access_place)
+
+    if {} in [json_body, json_info] or not hasattr(json_ids, "__iter__"):
+        new_json_body = {
+            **json_body,
+            **{
+                acc_name_key_in: {
+                    **json_info,
+                    **{
+                        "dm": [-1],
+                        "guild": [-1],
+                        "author": [-1]
+                        }
+                    }
+                }
+            }
+        old_body={
+            **json_read.get("old_body", {}),
+                **{time.time():{
+                    acc_name_key_in:json_info
+                    }
+                }
+            }
+        new_json_read={
+            **json_read,
+            **{
+                "body":new_json_body
+            },**{
+                "old_body":old_body
+                }
+            }
+        with open(access_json_path, "w") as f:
+            json.dump(new_json_read, f, indent=4)
+    return access_id in json_ids or json_ids == [-1]
+
+
 def obtainConfigPaths(flag_path=True, access_info={}):
     config_dir = GLOBAL_CONFIG_DIR3
     if False and GLOBAL_ISHEROKU:
         pass
     else:
-        return [s if flag_path is True else os.path.basename(s) for s in glob2.glob(f"{config_dir}/*_config.txt")]
+        config_paths=[
+                s if flag_path is True else os.path.basename(s) for s in glob2.glob(f"{config_dir}/*_config.txt") 
+                if checkAccessInfo(acc_name_key_in=os.path.basename(s).replace("_config.txt", ""), access_info=access_info)]
+        return config_paths
+        
 
 
 def obtainAccNames(access_info={}):
@@ -200,7 +258,6 @@ async def auto_upload_iksm(fromLocal=False, acc_name_key_in=None):
                 for dirName in glob2.glob(f"./export-*"):
                     shutil.move(dirName, out_root+"/escape")
 
-
             # upload jsons to stat.ink
             if fromLocal is True:
                 out_dirPaths = glob2.glob(f"{out_dir}/export-*")
@@ -264,14 +321,14 @@ async def autoUpload_OneCycle(interval=900*8, execute=True):
         await auto_upload_iksm()
         # pass
     next_interval = obtain_nextInterval(interval)
-    print(f"{nowtime} / Next Iksm Check : in {next_interval} sec")
+    print(f"{nowtime} / Next Splatoon Results Check: in {next_interval} sec")
     return next_interval
 
 
 async def __autoUploadCycle_old(next_time=900*8324496):
     nowtime = datetime.datetime.now()
     tmp_next_time = next_time-(nowtime.minute*60 + nowtime.second) % next_time
-    print(f"{nowtime} / Next Iksm Check : in {tmp_next_time} sec")
+    print(f"{nowtime} / Next Splatoon Results Check: in {tmp_next_time} sec")
     await asyncio.sleep(tmp_next_time)
 
     while True:
@@ -280,7 +337,7 @@ async def __autoUploadCycle_old(next_time=900*8324496):
         nowtime = datetime.datetime.now()
         tmp_next_time = next_time - \
             (nowtime.minute*60+nowtime.second) % next_time
-        print(f"{nowtime} / Next Iksm Check : in {tmp_next_time} sec")
+        print(f"{nowtime} / Next Splatoon Results Check: in {tmp_next_time} sec")
         await asyncio.sleep(tmp_next_time)
 
 # # ------------/ class /---------------

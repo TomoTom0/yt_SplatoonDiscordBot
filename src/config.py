@@ -15,7 +15,8 @@ const_paths = {
     "splat_dir": f"{os.path.dirname(__file__)}/../splatnet2statink",
     "splat_dir3": f"{os.path.dirname(__file__)}/../s3s",
     "out_root": f"{os.path.dirname(__file__)}/../out/splat_results",
-    "done_root": f"{os.path.dirname(__file__)}/../out/done_results"
+    "done_root": f"{os.path.dirname(__file__)}/../out/done_results",
+    "access_json_path": f"{os.path.dirname(__file__)}/../configs_s3s/access_permission.json"
 }
 
 

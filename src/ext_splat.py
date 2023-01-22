@@ -17,15 +17,24 @@ guild_ids = config.guild_ids
 config_dir = config.const_paths["config_dir"]
 config_dir3 = config.const_paths["config_dir3"]
 
-
 class Splat(commands.Cog):
     "Splatoonに関するコマンドがいくつもあります。"
 
     def __init__(self, bot):
         self.bot = bot
 
-    def obtainInfoAllAcc(self):
-        acc_name_sets = iksm_discord.obtainAccNames()
+    def obtainAccessInfo(self, ctx):
+        placeIsGuild=ctx.channel.guild is not None
+        access_info={
+            "check":True,
+            "place":"guild" if placeIsGuild is True else "dm",
+            "id":ctx.guild.id if placeIsGuild is True else ctx.author.id
+            }
+        return access_info
+
+
+    def obtainInfoAllAcc(self, access_info={}):
+        acc_name_sets = iksm_discord.obtainAccNames(access_info=access_info)
         content = f"{len(acc_name_sets)} accounts are registered:\n" +\
             "\t\t"+"\n\t\t".join([
                 "**{}** :\t`{}`\t\ton {}".format(
@@ -33,9 +42,9 @@ class Splat(commands.Cog):
                 for num, acc in enumerate(acc_name_sets)])
         return content
 
-    async def waitInputAcc(self, ctx):
-        acc_name_sets = iksm_discord.obtainAccNames()
-        await ctx.send(self.obtainInfoAllAcc())
+    async def waitInputAcc(self, ctx, access_info={}):
+        acc_name_sets = iksm_discord.obtainAccNames(access_info=access_info)
+        await ctx.send(self.obtainInfoAllAcc(access_info=access_info))
 
         def check_msg(msg):
             authorIsValid = (msg.author.id == ctx.message.author.id)
@@ -115,16 +124,17 @@ class Splat(commands.Cog):
     @commands.command(description="", pass_context=True)
     async def checkIksm(self, ctx: commands.Context, acc_name=""):
         """指定されたアカウントのiksm_sessionを表示します。"""
+        access_info=self.obtainAccessInfo(ctx)
         if acc_name == "":
-            acc_name_set = await self.waitInputAcc(ctx)
+            acc_name_set = await self.waitInputAcc(ctx, access_info=access_info)
             if acc_name_set is None:
                 return
             acc_name = acc_name_set["name"]
         else:
-            acc_name_set = await iksm_discord.checkAcc(ctx, acc_name)
+            acc_name_set = await iksm_discord.checkAcc(ctx, acc_name, access_info=access_info)
             if acc_name_set["name"] == "":
                 return
-        acc_info = iksm_discord.obtainAccInfo(acc_name_set["key"])
+        acc_info = iksm_discord.obtainAccInfo(acc_name_set["key"], access_info=access_info)
         if acc_info is None:
             await ctx.channel.send(f"`{acc_name}` is not regitered or cannot be seen")
         await ctx.channel.send(f"`{acc_name}`'s iksm_session is following:\n")
@@ -135,7 +145,7 @@ class Splat(commands.Cog):
     async def rmIksm(self, ctx: commands.Context, acc_name=""):
         """指定されたアカウントの情報を削除します。"""
         def removeConfigFile(acc_name_key: str):
-            if config.IsHeroku:  # for Heroku
+            if False and config.IsHeroku:  # for Heroku
                 before_config_tmp = json.loads(os.getenv("iksm_configs", "{}"))
                 before_config_jsons = eval(before_config_tmp) if type(
                     before_config_tmp) == str else before_config_tmp
@@ -148,13 +158,14 @@ class Splat(commands.Cog):
                 os.remove(f"{config_dir3}/{acc_name_key}_config.txt")
 
         # check
+        access_info=self.obtainAccessInfo(ctx)
         if acc_name == "":
-            acc_name_set = await self.waitInputAcc(ctx)
+            acc_name_set = await self.waitInputAcc(ctx, access_info=access_info)
             if acc_name_set is None:
                 return
             acc_name = acc_name_set["name"]
         else:
-            acc_name_set = await iksm_discord.checkAcc(ctx, acc_name)
+            acc_name_set = await iksm_discord.checkAcc(ctx, acc_name, access_info=access_info)
         await ctx.channel.send(f"Do you want to remove `{acc_name}`'s config file?(`yes/no`)")
 
         def check_msg(msg):
@@ -176,7 +187,7 @@ class Splat(commands.Cog):
     @commands.command(description="", pass_context=True)
     async def showIksm(self, ctx: commands.Context):
         """登録されているnintendoアカウント一覧を表示します。"""
-        access_info={"check":True, "type":"guild", "id":11}
+        access_info=self.obtainAccessInfo(ctx)
         acc_name_sets = iksm_discord.obtainAccNames(access_info=access_info)
         content = f"{len(acc_name_sets)} accounts are registered:\n" +\
             "\t\t"+"\n\t\t".join([
@@ -189,8 +200,8 @@ class Splat(commands.Cog):
     async def upIksm(self, ctx: commands.Context, acc_name=""):
         """ただちにstat.inkへ戦績をアップロードします。"""
         await ctx.send("stat.inkへのアップロードを開始します。")
-        acc_name_set = await iksm_discord.checkAcc(ctx, acc_name)
-        print(acc_name_set)
+        access_info=self.obtainAccessInfo(ctx)
+        acc_name_set = await iksm_discord.checkAcc(ctx, acc_name, access_info=access_info)
         await iksm_discord.auto_upload_iksm(fromLocal=False, acc_name_key_in=acc_name_set.get("key", None))
         await ctx.send("バックグラウンドで処理しています。詳細はログを確認してください。")
 
@@ -198,7 +209,8 @@ class Splat(commands.Cog):
     async def upIksmFromLocal(self, ctx: commands.Context, acc_name=""):
         """Localに保存されていた戦績のjsonファイルをstat.inkへアップロードします。"""
         await ctx.send("stat.inkへ戦績jsonファイルのアップロードを開始します。")
-        acc_name_set = await iksm_discord.checkAcc(ctx, acc_name)
+        access_info=self.obtainAccessInfo(ctx)
+        acc_name_set = await iksm_discord.checkAcc(ctx, acc_name, access_info=access_info)
         await iksm_discord.auto_upload_iksm(fromLocal=True, acc_name_key_in=acc_name_set.get("key", None))
         await ctx.send("バックグラウンドで処理しています。詳細はログを確認してください。")
 

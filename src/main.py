@@ -92,7 +92,7 @@ async def main():
     async def wait_for_loop():
         nowtime = datetime.datetime.now()
         next_interval = iksm_discord.obtain_nextInterval(SPLAT_UPLOAD_INTERVAL)
-        print(f"{nowtime} / Next Splatoon Results Check : in {next_interval} sec")
+        print(f"{nowtime} / Next Splatoon Results Check: in {next_interval} sec")
         sys.stdout.flush()
         await asyncio.sleep(next_interval)
 
