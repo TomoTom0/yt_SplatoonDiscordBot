@@ -103,7 +103,7 @@ class Splat(commands.Cog):
             return
         # try:
         try:
-            #print(STAT_INK_API_KEY)
+            # print(STAT_INK_API_KEY)
             makeConfig = iksm_discord.makeConfig()
             acc_name_set = await makeConfig.make_config_discord(STAT_INK_API_KEY, ctx)
             if acc_name_set is None:
@@ -123,10 +123,10 @@ class Splat(commands.Cog):
         await ctx.channel.send(success_message)
         # access_permission.json編集
         permission_info = {
-                "dm": [ctx.author.id],
-                "guild": [ctx.channel.guild.id if ctx.channel.guild is not None else 0],
-                "author": [ctx.author.id]
-            }
+            "dm": [ctx.author.id],
+            "guild": [ctx.channel.guild.id if ctx.channel.guild is not None else 0],
+            "author": [ctx.author.id]
+        }
         iksm_discord.updateAccessInfo(
             acc_name_key_in=acc_name_set["key"], permission_info_in=permission_info)
 
