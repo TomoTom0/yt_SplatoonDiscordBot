@@ -103,7 +103,7 @@ class Splat(commands.Cog):
             return
         # try:
         try:
-            print(STAT_INK_API_KEY)
+            #print(STAT_INK_API_KEY)
             makeConfig = iksm_discord.makeConfig()
             acc_name_set = await makeConfig.make_config_discord(STAT_INK_API_KEY, ctx)
             if acc_name_set is None:
@@ -112,11 +112,10 @@ class Splat(commands.Cog):
         except Exception as e:
             error_message = f"エラーが発生しました。\n{traceback.format_exc()}"
             print(error_message)
-            await ctx.channel.send(f"エラーが発生しました。詳細はbotのログを確認してください。")
+            await ctx.channel.send(error_message)
             return
         # convert config from s2s to s3s
 
-        print(acc_name_set)
         acc_name = acc_name_set["name"]
         success_message = "新たに次のアカウントが登録されました。\n" +\
             f"\t\t`{acc_name}`\n" +\
@@ -124,13 +123,10 @@ class Splat(commands.Cog):
         await ctx.channel.send(success_message)
         # access_permission.json編集
         permission_info = {
-            acc_name_set["key"]: {
                 "dm": [ctx.author.id],
                 "guild": [ctx.channel.guild.id if ctx.channel.guild is not None else 0],
                 "author": [ctx.author.id]
-                }
             }
-        print(permission_info)
         iksm_discord.updateAccessInfo(
             acc_name_key_in=acc_name_set["key"], permission_info_in=permission_info)
 
@@ -203,9 +199,7 @@ class Splat(commands.Cog):
     async def showIksm(self, ctx: commands.Context):
         """登録されているnintendoアカウント一覧を表示します。"""
         access_info = self.obtainAccessInfo(ctx)
-        print(access_info)
         acc_name_sets = iksm_discord.obtainAccNames(access_info=access_info)
-        print(acc_name_sets)
         content = f"{len(acc_name_sets)} accounts are registered:\n" +\
             "\t\t"+"\n\t\t".join([
                 "**{}** :\t`{}`\t\ton {}".format(

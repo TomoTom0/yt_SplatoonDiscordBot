@@ -112,18 +112,12 @@ def checkAccessInfo(acc_name_key_in="", access_info={}):
 
     with open(access_json_path, "r") as f:
         json_read = json.load(f)
-    print(json_read.keys())
     json_body = json_read.get("body", {})
     permission_info = json_body.get(acc_name_key_in, {})
     access_place = access_info.get("place", None)
     access_id = access_info.get("id", None)
     json_ids = permission_info.get(access_place, None)
-    print(115, access_place, acc_name_key_in)
-    print(permission_info)
-    print(116, {} in [json_body, permission_info])
-    print(not hasattr(json_ids, "__iter__"))
     if {} in [json_body, permission_info] or not hasattr(json_ids, "__iter__"):
-        print({k: v for k, v in permission_info if k != access_place})
         updateAccessInfo(acc_name_key_in=acc_info, permission_info_in={
                          k: v for k, v in permission_info if k != access_place})
         return True
@@ -1000,8 +994,6 @@ class makeConfig():
         soup = BeautifulSoup(splatnet3_home.text, "html.parser")
 
         main_js = soup.select_one("script[src*=\"static\"]")
-        print(main_js)
-        print(soup.select_one("script[src*='static']"))
         if not main_js:
             return WEB_VIEW_VER_FALLBACK
 
