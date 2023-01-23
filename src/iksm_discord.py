@@ -49,6 +49,49 @@ def decomposeKey(key=""):
         "time": (re.findall(r"(?<=_)\d{10}$", key)+[0])[0]
     }
 
+def updateAccessInfo(acc_name_key_in, permission_info_in):
+    access_json_path = GLOBAL_ACCESS_JSON_PATH
+    if not os.path.exists(access_json_path):
+        with open(access_json_path, "w") as f:
+            json.dump({"body":{}, "old_body":{}}, f, indent=4)
+        
+    with open(access_json_path, "r") as f:
+        json_read = json.load(f)
+    json_body = json_read.get("body", {})
+    permission_info = json_body.get(acc_name_key_in, {})
+    permission_info_default={
+            "dm":[-1],
+            "guild":[-1],
+            "author":[0]
+        }
+    permission_info_new={k:permission_info_in.get(k, v) for k,v in permission_info_default.items()}
+
+    
+    new_json_body = {
+        **json_body,
+        **{
+            acc_name_key_in: permission_info_new
+            }
+        }
+    old_body={
+        **json_read.get("old_body", {}),
+            **{time.time():{
+                acc_name_key_in:permission_info
+                }
+            }
+        }
+    new_json_read={
+        **json_read,
+        **{
+            "body":new_json_body
+        },**{
+            "old_body":old_body
+            }
+        }
+    with open(access_json_path, "w") as f:
+        json.dump(new_json_read, f, indent=4)
+    
+
 
 def checkAccessInfo(acc_name_key_in="", access_info={}):
     if access_info.get("check", False) is False:
@@ -64,42 +107,16 @@ def checkAccessInfo(acc_name_key_in="", access_info={}):
     with open(access_json_path, "r") as f:
         json_read = json.load(f)
     json_body = json_read.get("body", {})
-    json_info = json_body.get(acc_name_key_in, {})
+    permission_info = json_body.get(acc_name_key_in, {})
     access_place = access_info.get("place", None)
     access_id = access_info.get("id", None)
-    json_ids = json_info.get(access_place)
+    _tmp_json_ids = permission_info.get(access_place)
+    json_ids=_tmp_json_ids if hasattr(_tmp_json_ids, "__iter__") else None
+    
 
-    if {} in [json_body, json_info] or not hasattr(json_ids, "__iter__"):
-        new_json_body = {
-            **json_body,
-            **{
-                acc_name_key_in: {
-                    **json_info,
-                    **{
-                        "dm": [-1],
-                        "guild": [-1],
-                        "author": [-1]
-                        }
-                    }
-                }
-            }
-        old_body={
-            **json_read.get("old_body", {}),
-                **{time.time():{
-                    acc_name_key_in:json_info
-                    }
-                }
-            }
-        new_json_read={
-            **json_read,
-            **{
-                "body":new_json_body
-            },**{
-                "old_body":old_body
-                }
-            }
-        with open(access_json_path, "w") as f:
-            json.dump(new_json_read, f, indent=4)
+    if {} in [json_body, permission_info] or not hasattr(json_ids, "__iter__"):
+        updateAccessInfo(acc_name_key_in=acc_info, permission_info_in={k:v for k,v in permission_info if k != access_place})
+        return True
     return access_id in json_ids or json_ids == [-1]
 
 
@@ -517,7 +534,7 @@ class makeConfig():
                 f.write(json.dumps(config_data, indent=4,
                                    sort_keys=True, separators=(",", ": ")))
 
-        return acc_name
+        return decomposeKey(f"{acc_name}_{time_10}")
 
     # # -----------/ remake functions for discord_bot /-----------
 

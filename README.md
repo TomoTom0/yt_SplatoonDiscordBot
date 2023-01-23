@@ -107,11 +107,10 @@ botのupdateへの対応や既存のbotとの併用を便利にするため、ma
 積極的に変更されないことが予想される変数・関数は以下の通りです。
 
 |変数/関数名|既定値/引数|説明|
-|`DISCORD_TOKENS`|既定値割愛||
+|-|-|-|
+|`DISCORD_TOKENS`|既定値割愛|`mode`ごとにDiscord bot tokenを使い分けたい場合のための辞書です|
 |`mode`|`main`|`mode`に`main`が含まれる場合のみ戦績の定期チェックは行われます|
-|`intents`|||
-|`const_paths`|||
-|`intents`|||
+|`const_paths`|既定値割愛|各種ディレクトリやファイルのパスの辞書です|
 
 
 ## References

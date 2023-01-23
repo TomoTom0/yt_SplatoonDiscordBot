@@ -67,7 +67,8 @@ class Splat(commands.Cog):
             await ctx.channel.send("The command has been timeout, and please retry.")
             return None
 
-    # start
+    # # command
+    # ## start
 
     @commands.command(description="", pass_context=True)
     async def startIksm(self, ctx: commands.Context, STAT_INK_API_KEY=""):
@@ -104,8 +105,8 @@ class Splat(commands.Cog):
         try:
             print(STAT_INK_API_KEY)
             makeConfig = iksm_discord.makeConfig()
-            acc_name = await makeConfig.make_config_discord(STAT_INK_API_KEY, ctx)
-            if acc_name is None:
+            acc_name_set = await makeConfig.make_config_discord(STAT_INK_API_KEY, ctx)
+            if acc_name_set is None:
                 await ctx.send("エラーが発生しました。詳細はbotのログを確認してください。")
                 return
         except Exception as e:
@@ -115,12 +116,16 @@ class Splat(commands.Cog):
             return
         # convert config from s2s to s3s
 
+        acc_name = acc_name_set["name"]
         success_message = "新たに次のアカウントが登録されました。\n" +\
             f"\t\t`{acc_name}`\n" +\
             ("\nこの後botは再起動されます。次の操作はしばらくお待ちください。" if config.IsHeroku else "")
         await ctx.channel.send(success_message)
+        # access_permission.json編集
+        permission_info={acc_name_set["key"]:{"dm":[ctx.author.id], "guild":[ctx.channel.guild.id if ctx.channel.guild is not None else 0] ,"author":[ctx.author.id]}}
+        iksm_discord.updateAccessInfo(acc_name_key_in=acc_name_set["key"], permission_info_in=permission_info)
 
-    # check
+    # ## check
     @commands.command(description="", pass_context=True)
     async def checkIksm(self, ctx: commands.Context, acc_name=""):
         """指定されたアカウントのiksm_sessionを表示します。"""
@@ -140,7 +145,7 @@ class Splat(commands.Cog):
         await ctx.channel.send(f"`{acc_name}`'s iksm_session is following:\n")
         await ctx.channel.send(acc_info["session_token"])
 
-    # rm
+    # ## rm
     @commands.command(description="", pass_context=True)
     async def rmIksm(self, ctx: commands.Context, acc_name=""):
         """指定されたアカウントの情報を削除します。"""
