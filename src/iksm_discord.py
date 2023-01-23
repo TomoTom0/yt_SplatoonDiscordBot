@@ -21,9 +21,15 @@ from distutils.version import StrictVersion
 from bs4 import BeautifulSoup
 
 import config
-GLOBAL_VERSIONS_DEFAULT = {"NSO": "2.2.0",
-                           "A": "1.8.2", "S3S": "0.1.5", "date": 0}
-GLOBAL_VERSIONS_SAVED = GLOBAL_VERSIONS_DEFAULT
+GLOBAL_VERSIONS_DEFAULT = {
+    "NSO": "2.4.0",
+    "A": "1.8.2",
+    "S3S": "0.1.5",
+    "date": 0,
+    "WEB_VIEW": "unknown",
+    "WEB_VIEW_VER_FALLBACK": "2.0.0-bd36a652"
+}
+# GLOBAL_VERSIONS_SAVED = GLOBAL_VERSIONS_DEFAULT
 GLOBAL_SPLAT_DIR = config.const_paths.get("splat_dir", None)
 GLOBAL_CONFIG_DIR = config.const_paths.get("config_dir", None)
 GLOBAL_SPLAT_DIR3 = config.const_paths.get("splat_dir3", None)
@@ -37,7 +43,7 @@ GLOBAL_ACCESS_JSON_PATH = config.const_paths.get("access_json_path", None)
 
 GLOBAL_SPLATNET3_URL = "https://api.lp1.av5ja.srv.nintendo.net"
 GLOBAL_GRAPHQL_URL = "https://api.lp1.av5ja.srv.nintendo.net/api/graphql"
-GLOBAL_WEB_VIEW_VERSION = "1.0.0-d3a90678"
+# GLOBAL_WEB_VIEW_VERSION = "2.0.0-bd36a652"
 
 # # functions
 
@@ -49,48 +55,48 @@ def decomposeKey(key=""):
         "time": (re.findall(r"(?<=_)\d{10}$", key)+[0])[0]
     }
 
+
 def updateAccessInfo(acc_name_key_in, permission_info_in):
     access_json_path = GLOBAL_ACCESS_JSON_PATH
     if not os.path.exists(access_json_path):
         with open(access_json_path, "w") as f:
-            json.dump({"body":{}, "old_body":{}}, f, indent=4)
-        
+            json.dump({"body": {}, "old_body": {}}, f, indent=4)
+
     with open(access_json_path, "r") as f:
         json_read = json.load(f)
     json_body = json_read.get("body", {})
     permission_info = json_body.get(acc_name_key_in, {})
-    permission_info_default={
-            "dm":[-1],
-            "guild":[-1],
-            "author":[0]
-        }
-    permission_info_new={k:permission_info_in.get(k, v) for k,v in permission_info_default.items()}
+    permission_info_default = {
+        "dm": [-1],
+        "guild": [-1],
+        "author": [0]
+    }
+    permission_info_new = {k: permission_info_in.get(
+        k, v) for k, v in permission_info_default.items()}
 
-    
     new_json_body = {
         **json_body,
         **{
             acc_name_key_in: permission_info_new
-            }
         }
-    old_body={
+    }
+    old_body = {
         **json_read.get("old_body", {}),
-            **{time.time():{
-                acc_name_key_in:permission_info
-                }
-            }
+        **{time.time(): {
+            acc_name_key_in: permission_info
         }
-    new_json_read={
+        }
+    }
+    new_json_read = {
         **json_read,
         **{
-            "body":new_json_body
-        },**{
-            "old_body":old_body
-            }
+            "body": new_json_body
+        }, **{
+            "old_body": old_body
         }
+    }
     with open(access_json_path, "w") as f:
         json.dump(new_json_read, f, indent=4)
-    
 
 
 def checkAccessInfo(acc_name_key_in="", access_info={}):
@@ -102,20 +108,24 @@ def checkAccessInfo(acc_name_key_in="", access_info={}):
     access_json_path = GLOBAL_ACCESS_JSON_PATH
     if not os.path.exists(access_json_path):
         with open(access_json_path, "w") as f:
-            json.dump({"body":{}, "old_body":{}}, f, indent=4)
-        
+            json.dump({"body": {}, "old_body": {}}, f, indent=4)
+
     with open(access_json_path, "r") as f:
         json_read = json.load(f)
+    print(json_read.keys())
     json_body = json_read.get("body", {})
     permission_info = json_body.get(acc_name_key_in, {})
     access_place = access_info.get("place", None)
     access_id = access_info.get("id", None)
-    _tmp_json_ids = permission_info.get(access_place)
-    json_ids=_tmp_json_ids if hasattr(_tmp_json_ids, "__iter__") else None
-    
-
+    json_ids = permission_info.get(access_place, None)
+    print(115, access_place, acc_name_key_in)
+    print(permission_info)
+    print(116, {} in [json_body, permission_info])
+    print(not hasattr(json_ids, "__iter__"))
     if {} in [json_body, permission_info] or not hasattr(json_ids, "__iter__"):
-        updateAccessInfo(acc_name_key_in=acc_info, permission_info_in={k:v for k,v in permission_info if k != access_place})
+        print({k: v for k, v in permission_info if k != access_place})
+        updateAccessInfo(acc_name_key_in=acc_info, permission_info_in={
+                         k: v for k, v in permission_info if k != access_place})
         return True
     return access_id in json_ids or json_ids == [-1]
 
@@ -125,11 +135,10 @@ def obtainConfigPaths(flag_path=True, access_info={}):
     if False and GLOBAL_ISHEROKU:
         pass
     else:
-        config_paths=[
-                s if flag_path is True else os.path.basename(s) for s in glob2.glob(f"{config_dir}/*_config.txt") 
-                if checkAccessInfo(acc_name_key_in=os.path.basename(s).replace("_config.txt", ""), access_info=access_info)]
+        config_paths = [
+            s if flag_path is True else os.path.basename(s) for s in glob2.glob(f"{config_dir}/*_config.txt")
+            if checkAccessInfo(acc_name_key_in=os.path.basename(s).replace("_config.txt", ""), access_info=access_info)]
         return config_paths
-        
 
 
 def obtainAccNames(access_info={}):
@@ -221,7 +230,7 @@ async def _upload_iksm(config_name: str, config_dir: str, config_config_dir: str
     with open(f"{config_config_dir}/config.txt") as f:
         config_json = json.load(f)
     api_key = config_json["api_key"]
-    if api_key in ["0"*43, "skip", ""]:  # API_KEY is not setted
+    if api_key in ["skip", ""]:  # API_KEY is not setted
         return
     cmd = " ".join(["python3", splat_script, splat_option])
     await _asyncio_run(cmd)
@@ -238,7 +247,7 @@ async def auto_upload_iksm(fromLocal=False, acc_name_key_in=None):
         before_config_jsons = eval(before_config_tmp) if isinstance(
             before_config_tmp, str) else before_config_tmp
         for acc_name, v in before_config_jsons.items():
-            if v["api_key"] in ["0"*43, "skip"]:  # API_KEY is not setted
+            if v["api_key"] in ["skip"]:  # API_KEY is not setted
                 continue
             # make config from ENV
             with open(f"{GLOBAL_CONFIG_DIR}/config.txt", "w") as f:
@@ -362,6 +371,7 @@ async def __autoUploadCycle_old(next_time=900*8324496):
 
 class makeConfig():
     def __init__(self):
+        self.versions_saved = GLOBAL_VERSIONS_DEFAULT
         self.versions = self.obtainVersions()
         self.USER_LANG = "ja-JP"
         self.session = requests.Session()
@@ -383,15 +393,14 @@ class makeConfig():
         return base64.b64decode(content).decode()"""
 
     def obtainVersions(self):
-        global GLOBAL_VERSIONS_SAVED
         # update check
         time_now = time.time()
-        old_versions = GLOBAL_VERSIONS_SAVED
+        old_versions = self.versions_saved
 
         if time_now - old_versions["date"] < 6 * 3600:
             return old_versions
 
-        versions = {"date": time_now}
+        versions_date = {"date": time_now}
         versions_default = GLOBAL_VERSIONS_DEFAULT
         try:
             # NSO_VERSION
@@ -402,42 +411,62 @@ class makeConfig():
                 r"Ver.\s*\d+\.\d+\.\d+", res.text)+[versions_default["NSO"]]
             NSO_versions = [re.findall(r"\d+\.\d+\.\d+", s)[0]
                             for s in NSO_version_lines]
-            versions["NSO"] = sorted(NSO_versions, key=StrictVersion)[-1]
+            versions_fromNintendo = {"NSO": sorted(
+                NSO_versions, key=StrictVersion)[-1]}
 
-            # A_VERSION
-            repoInfo_splat = {"user": "frozenpandaman",
-                              "repo": "splatnet2statink", "path": "splatnet2statink.py"}
-            # splat_content = self.obtainGitHubContent(**repoInfo_splat)
-            # A_lines = re.findall(r"(?<=A_VERSION).*\d+\.\d+\.\d+.*", splat_content)
+            # GitHub
 
-            def obtainGitHubUrl(user, repo, path):
-                return f"https://github.com/{user}/{repo}/blob/master/{path}"
-            gitHubUrl = obtainGitHubUrl(**repoInfo_splat)
-            res_splat = requests.get(gitHubUrl)
-            A_lines = re.findall(
-                r"A_VERSION.*&quot;\d+\.\d+\.\d+&quot;", res_splat.text)
-            versions["A"] = re.findall(
-                r"\d+\.\d+\.\d+", A_lines[0])[0] if len(A_lines) > 0 else versions_default["A"]
+            def _obtainVersionFromGitHub(repoInfo, regExp, default_value):
+                def _obtainGitHubUrl(user, repo, path):
+                    return f"https://github.com/{user}/{repo}/blob/master/{path}"
 
-            # S3S_VERSION
-            repoInfo_splat = {"user": "frozenpandaman",
-                              "repo": "s3s", "path": "s3s.py"}
-            # splat_content = self.obtainGitHubContent(**repoInfo_splat)
-            # A_lines = re.findall(r"(?<=A_VERSION).*\d+\.\d+\.\d+.*", splat_content)
+                gitHubUrl = _obtainGitHubUrl(**repoInfo)
+                res_github = requests.get(gitHubUrl)
+                lines_searched = re.findall(
+                    regExp, res_github.text)
+                return re.findall(
+                    r"\d+\.\d+\.\d+", lines_searched[0])[0] if len(lines_searched) > 0 else default_value
 
-            def obtainGitHubUrl(user, repo, path):
-                return f"https://github.com/{user}/{repo}/blob/master/{path}"
-            gitHubUrl = obtainGitHubUrl(**repoInfo_splat)
-            res_splat = requests.get(gitHubUrl)
-            s3s_lines = re.findall(
-                r"A_VERSION.*&quot;\d+\.\d+\.\d+&quot;", res_splat.text)
-            versions["S3S"] = re.findall(
-                r"\d+\.\d+\.\d+", s3s_lines[0])[0] if len(s3s_lines) > 0 else versions_default["S3S"]
+            args_forGitHub_dict = {
+                "A": {
+                    "repoInfo": {
+                        "user": "frozenpandaman",
+                        "repo": "splatnet2statink",
+                        "path": "splatnet2statink.py"
+                    },
+                    "regExp": r"A_VERSION.*&quot;\d+\.\d+\.\d+&quot;",
+                    "default_value": versions_default.get("A", "DEFAULT_VALUE")
+                },
+                "S3S": {
+                    "repoInfo": {
+                        "user": "frozenpandaman",
+                        "repo": "s3s",
+                        "path": "s3s.py"
+                    },
+                    "regExp": r"A_VERSION.*&quot;\d+\.\d+\.\d+&quot;",
+                    "default_value": versions_default.get("S3S", "DEFAULT_VALUE")
+                },
+                "WEB_VIEW_VER_FALLBACK": {
+                    "repoInfo": {
+                        "user": "frozenpandaman",
+                        "repo": "s3s",
+                        "path": "iksm.py"
+                    },
+                    "regExp": r"WEB_VIEW_VER_FALLBACK.*&quot;\d+\.\d+\.\d+&quot;",
+                    "default_value": versions_default.get("WEB_VIEW_VER_FALLBACK", "DEFAULT_VALUE")
+                }
+            }
+
+            versions_fromGitHub = {k: _obtainVersionFromGitHub(
+                **v) for k, v in args_forGitHub_dict.items()}
+
+            versions = {**versions_default, **versions_date, **
+                        versions_fromNintendo, **versions_fromGitHub}
 
         except Exception as e:
             versions = versions_default
 
-        GLOBAL_VERSIONS_SAVED = versions
+        self.versions_saved = versions
         return versions
 
     async def send_msg(self, content: str, isError=False):
@@ -510,6 +539,9 @@ class makeConfig():
                            "session_token": new_token,
                            "f_gen": "https://api.imink.app/f",
                            "gtoken": self.gtoken, "bullettoken": self.bullet_token}
+
+        print(config_data, config_data_s3s)
+
         # save config
         time_10 = format(int(time.time()), "010")
         if self.isHeroku is True:  # for Heroku
@@ -600,15 +632,16 @@ class makeConfig():
         # timestamp = time.time_ns() // 1000000
         # guid = str(uuid.uuid4())
         # step 1: obtain id_response
+        # ---- get_gtoken ----
+
         app_head = {
             "Host":            "accounts.nintendo.com",
             "Accept-Encoding": "gzip",
-            "Content-Type":    "application/json; charset=utf-8",
-            "Accept-Language": userLang,
-            "Content-Length":  "439",
+            "Content-Type":    "application/json",
+            "Content-Length":  "436",
             "Accept":          "application/json",
             "Connection":      "Keep-Alive",
-            "User-Agent":      f"OnlineLounge/{NSO_VERSION} NASDKAPI Android"
+            "User-Agent":      "Dalvik/2.1.0 (Linux; U; Android 7.1.2)"
         }
 
         body = {
@@ -625,8 +658,9 @@ class makeConfig():
 
         idToken = id_response.get("access_token", None)
         if idToken is None:
-            content = "Not a valid authorization request. Please delete config.txt and try again. \
-            Error from Nintendo (in api/token step)"
+            # idToken is invalid
+            content = "Not a valid authorization request. Please delete config.txt and try again.\n" +\
+                "Error from Nintendo (in api/token step)"
             await self.send_msg(content)
             content2 = "id_response is:\n"+json.dumps(id_response, indent=2)
             await self.send_msg(content+"\n"+content2, isError=True)
@@ -636,8 +670,8 @@ class makeConfig():
         # step2: get user info
         # get user info
         app_head = {
-            "User-Agent":      f"OnlineLounge/{NSO_VERSION} NASDKAPI Android",
-            "Accept-Language": userLang,
+            "User-Agent":      "NASDKAPI; Android",
+            "Content-Type":    "application/json",
             "Accept":          "application/json",
             "Authorization":   f"Bearer {idToken}",
             "Host":            "api.accounts.nintendo.com",
@@ -650,29 +684,22 @@ class makeConfig():
         user_info = json.loads(r.text)
         self.user_info = user_info
 
-        nickname = user_info["nickname"]
-        user_lang = user_info["language"]
-        user_country = user_info["country"]
-
         # get access token
         # step3: splatoon token
 
         # step3-1: f, 1
+        # call_imink_api <= call_f_api
         idToken = id_response["id_token"]
         f, uuid, timestamp = await self.call_imink_api_discord(idToken, 1)
 
         app_head = {
-            "Host":             "api-lp1.znc.srv.nintendo.net",
-            "Accept-Language":  userLang,
-            "User-Agent":       f"com.nintendo.znca/{NSO_VERSION} (Android/7.1.2)",
-            "Accept":           "application/json",
+            "X-Platform":       "Android",
             "X-ProductVersion": NSO_VERSION,
             "Content-Type":     "application/json; charset=utf-8",
-            "Connection":       "Keep-Alive",
-            "Authorization":    "Bearer",
             "Content-Length":   str(990 + len(f)),
-            "X-Platform":       "Android",
-            "Accept-Encoding":  "gzip"
+            "Connection":       "Keep-Alive",
+            "Accept-Encoding":  "gzip",
+            "User-Agent":       f"com.nintendo.znca/{NSO_VERSION}(Android/7.1.2)",
         }
 
         keysAreNotExisting = not all([
@@ -684,6 +711,10 @@ class makeConfig():
         if keysAreNotExisting is True:
             await self.send_msg(f"Error(s) from Nintendo with flapg_api")
             return
+
+        # nickname = user_info["nickname"]
+        # user_lang = user_info["language"]
+        # user_country = user_info["country"]
 
         parameter = {
             "f":          f,
@@ -727,11 +758,20 @@ class makeConfig():
             "X-Platform":       "Android",
             "Accept-Encoding":  "gzip"
         }
+        app_head = {
+            "X-Platform":       "Android",
+            "X-ProductVersion": NSO_VERSION,
+            "Authorization":    f"Bearer {splat_idToken}",
+            "Content-Type":     "application/json; charset=utf-8",
+            "Content-Length":   "391",
+            "Accept-Encoding":  "gzip",
+            "User-Agent":       f"com.nintendo.znca/{NSO_VERSION}(Android/7.1.2)"
+        }
 
         parameter = {
-            "id":                5741031244955648,
+            "id":                4834290508791808,
             "f":                 f,
-            "registrationToken": idToken,
+            "registrationToken": splat_idToken,
             "timestamp":         timestamp,
             "requestId":         uuid,
         }
@@ -740,9 +780,11 @@ class makeConfig():
         url = "https://api-lp1.znc.srv.nintendo.net/v2/Game/GetWebServiceToken"
 
         r = requests.post(url, headers=app_head, json=body)
+        # splatton_access_token <= web_service_resp
         splatoon_access_token = json.loads(r.text)
 
         # get cookie
+        # X_GameTOken <= web_service_token
         X_GameWebToken = splatoon_access_token.get(
             "result", {}).get("accessToken", None)
         if X_GameWebToken is None:
@@ -806,6 +848,7 @@ class makeConfig():
         self.gtoken = web_service_token
 
         # step8: obtain bullet token
+        # get_bullet
         APP_USER_AGENT = "Mozilla/5.0 (Linux; Android 11; Pixel 5) " \
             "AppleWebKit/537.36 (KHTML, like Gecko) " \
             "Chrome/94.0.4606.61 Mobile Safari/537.36"
@@ -814,191 +857,6 @@ class makeConfig():
         bullet_token = await self.get_bullet_discord(web_service_token,
                                                      self.get_web_view_ver(), APP_USER_AGENT, user_lang, user_country)
         self.bullet_token = bullet_token
-
-    async def get_cookie_discord_old(self, session_token):
-        """Returns a new cookie provided the session_token."""
-
-        userLang = self.USER_LANG
-        NSO_VERSION = self.versions["NSO"]
-        A_VERSION = self.versions["A"]
-        self.iksm_session = None
-        self.nickname = None
-
-        # step 1: obtain id_response
-        timestamp = int(time.time())
-        guid = str(uuid.uuid4())
-
-        app_head = {
-            "Host":            "accounts.nintendo.com",
-            "Accept-Encoding": "gzip",
-            "Content-Type":    "application/json; charset=utf-8",
-            "Accept-Language": userLang,
-            "Content-Length":  "439",
-            "Accept":          "application/json",
-            "Connection":      "Keep-Alive",
-            "User-Agent":      f"OnlineLounge/{NSO_VERSION} NASDKAPI Android"
-        }
-
-        body = {
-            "client_id":     "71b963c1b7b6d119",  # Splatoon 2 service
-            "session_token": session_token,
-            "grant_type":    "urn:ietf:params:oauth:grant-type:jwt-bearer-session-token"
-        }
-
-        url = "https://accounts.nintendo.com/connect/1.0.0/api/token"
-
-        r = requests.post(url, headers=app_head, json=body)
-        id_response = json.loads(r.text)
-        self.id_response = id_response
-
-        # check whether idToken is Valid or not
-        idToken = id_response.get("access_token", None)
-        if idToken is None:
-            content = "Not a valid authorization request. Please delete config.txt and try again. \
-            Error from Nintendo (in api/token step)"
-            await self.send_msg(content)
-            content2 = "id_response is:\n"+json.dumps(id_response, indent=2)
-            await self.send_msg(content+"\n"+content2, isError=True)
-            return
-
-        # idToken is Valid
-        # step2: get user info
-        app_head = {
-            "User-Agent":      f"OnlineLounge/{NSO_VERSION} NASDKAPI Android",
-            "Accept-Language": userLang,
-            "Accept":          "application/json",
-            "Authorization":   f"Bearer {idToken}",
-            "Host":            "api.accounts.nintendo.com",
-            "Connection":      "Keep-Alive",
-            "Accept-Encoding": "gzip"
-        }
-        url = "https://api.accounts.nintendo.com/2.0.0/users/me"
-
-        r = requests.get(url, headers=app_head)
-        user_info = json.loads(r.text)
-        self.user_info = user_info
-
-        # get access token
-        # step3: splatoon token
-        app_head = {
-            "Host":             "api-lp1.znc.srv.nintendo.net",
-            "Accept-Language":  userLang,
-            "User-Agent":       f"com.nintendo.znca/{NSO_VERSION} (Android/7.1.2)",
-            "Accept":           "application/json",
-            "X-ProductVersion": f"{NSO_VERSION}",
-            "Content-Type":     "application/json; charset=utf-8",
-            "Connection":       "Keep-Alive",
-            "Authorization":    "Bearer",
-            # "Content-Length":   "1036",
-            "X-Platform":       "Android",
-            "Accept-Encoding":  "gzip"
-        }
-
-        # step3-1: flapg api
-        # flapg_nso = await self.call_flapg_api_discord(idToken, guid, timestamp, "nso")
-        flapg_nso, uuid, timestamp = await self.call_imink_api(idToken, 1)
-
-        keysAreNotExisting = not all([
-            isinstance(flapg_nso, dict),
-            isinstance(user_info, dict)
-        ]) or not all([
-            set(["f", "p1", "p2", "p3"]) <= set(flapg_nso.keys()),
-            set(["country", "birthday", "language"]) <= set(user_info.keys())
-        ])
-        if keysAreNotExisting is True:
-            await self.send_msg(f"Error(s) from Nintendo with flapg_api")
-            return
-
-        parameter = {
-            "f":          flapg_nso["f"],
-            "naIdToken":  flapg_nso["p1"],
-            "timestamp":  flapg_nso["p2"],
-            "requestId":  flapg_nso["p3"],
-            "naCountry":  user_info["country"],
-            "naBirthday": user_info["birthday"],
-            "language":   user_info["language"]
-        }
-        # except SystemExit:
-        #    return -1
-        body = {"parameter": parameter}
-        url = "https://api-lp1.znc.srv.nintendo.net/v1/Account/Login"
-        r = requests.post(url, headers=app_head, json=body)
-        splatoon_token = json.loads(r.text)
-
-        # step4: splatoon access token
-        splat_idToken = splatoon_token.get("result", {}).get(
-            "webApiServerCredential", {}).get("accessToken", None)
-        if splat_idToken is None:
-            await self.send_msg("Error from Nintendo (in Account/Login step):" +
-                                json.dumps(splatoon_token, indent=2))
-            return
-        # step4-1: flapg api
-        # flapg_app = await self.call_flapg_api_discord(splat_idToken, guid, timestamp, "app")
-        flapg_app, uuid, timestamp = await self.call_imink_api(idToken, 2)
-
-        # get splatoon access token
-        app_head = {
-            "Host":             "api-lp1.znc.srv.nintendo.net",
-            "User-Agent":       f"com.nintendo.znca/{NSO_VERSION} (Android/7.1.2)",
-            "Accept":           "application/json",
-            "X-ProductVersion": f"{NSO_VERSION}",  # update
-            "Content-Type":     "application/json; charset=utf-8",
-            "Connection":       "Keep-Alive",
-            "Authorization":    f"Bearer {splat_idToken}",
-            "Content-Length":   "37",
-            "X-Platform":       "Android",
-            "Accept-Encoding":  "gzip"
-        }
-
-        # step5: splatoon access token
-        if not isinstance(flapg_app, dict) or not set(["f", "p1", "p2", "p3"]) <= set(flapg_app.keys()):
-            await self.send_msg(f"Error(s) from Nintendo with flapg_api")
-            return
-        parameter = {
-            "id":                5741031244955648,
-            "f":                 flapg_app["f"],
-            "registrationToken": flapg_app["p1"],
-            "timestamp":         flapg_app["p2"],
-            "requestId":         flapg_app["p3"]
-        }
-        body = {"parameter": parameter}
-
-        url = "https://api-lp1.znc.srv.nintendo.net/v2/Game/GetWebServiceToken"
-
-        r = requests.post(url, headers=app_head, json=body)
-        splatoon_access_token = json.loads(r.text)
-
-        # get cookie
-        X_GameWebToken = splatoon_access_token.get(
-            "result", {}).get("accessToken", None)
-        try:
-            app_head = {
-                "Host":                    "app.splatoon2.nintendo.net",
-                "X-IsAppAnalyticsOptedIn": "false",
-                "Accept":                  "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                "Accept-Encoding":         "gzip,deflate",
-                "X-GameWebToken":          X_GameWebToken,
-                "Accept-Language":         userLang,
-                "X-IsAnalyticsOptedIn":    "false",
-                "Connection":              "keep-alive",
-                "DNT":                     "0",
-                "User-Agent":              "Mozilla/5.0 (Linux; Android 7.1.2; Pixel Build/NJH47D; wv) " +
-                "AppleWebKit/537.36 (KHTML, like Gecko) " +
-                "Version/4.0 Chrome/59.0.3071.125 Mobile Safari/537.36",
-                "X-Requested-With":        "com.nintendo.znca"
-            }
-        except:
-            await self.send_msg("Error from Nintendo (in Game/GetWebServiceToken step):" +
-                                json.dumps(splatoon_access_token, indent=2))
-            return
-
-        url = "https://app.splatoon2.nintendo.net/?lang={}".format(userLang)
-        r = requests.get(url, headers=app_head)
-
-        nickname = user_info.get("nickname", None)
-        iksm_session = r.cookies.get("iksm_session", None)
-        self.iksm_session = iksm_session
-        self.nickname = nickname
 
     # ## get_session_token
 
@@ -1104,32 +962,80 @@ class makeConfig():
             return None
         return json.loads(api_response.text).get("hash", None)
 
-    def get_web_view_ver(self):
+    def get_web_view_ver(self, bhead=None, gtoken=None):
         """Find & parse the SplatNet 3 main.js file for the current site version."""
         SPLATNET3_URL = GLOBAL_SPLATNET3_URL
-        WEB_VIEW_VERSION = GLOBAL_WEB_VIEW_VERSION
+        WEB_VIEW_VERSION = self.versions["WEB_VIEW"]
+        WEB_VIEW_VER_FALLBACK = self.versions["WEB_VIEW_VER_FALLBACK"]
 
-        splatnet3_home = requests.get(SPLATNET3_URL)
+        if WEB_VIEW_VERSION != "unknown":
+            return WEB_VIEW_VERSION
+
+        app_head = {
+            "Upgrade-Insecure-Requests":   "1",
+            "Accept":                      "*/*",
+            "DNT":                         "1",
+            "X-AppColorScheme":            "DARK",
+            "X-Requested-With":            "com.nintendo.znca",
+            "Sec-Fetch-Site":              "none",
+            "Sec-Fetch-Mode":              "navigate",
+            "Sec-Fetch-User":              "?1",
+            "Sec-Fetch-Dest":              "document"
+        }
+        app_cookies = {
+            "_dnt":    "1"     # Do Not Track
+        }
+
+        if bhead is not None:
+            app_head["User-Agent"] = bhead.get("User-Agent")
+            app_head["Accept-Encoding"] = bhead.get("Accept-Encoding")
+            app_head["Accept-Language"] = bhead.get("Accept-Language")
+        if gtoken is not None:
+            app_cookies["_gtoken"] = gtoken  # X-GameWebToken
+
+        splatnet3_home = requests.get(
+            SPLATNET3_URL, headers=app_head, cookies=app_cookies)
+        if splatnet3_home.status_code != 200:
+            return WEB_VIEW_VER_FALLBACK
         soup = BeautifulSoup(splatnet3_home.text, "html.parser")
 
         main_js = soup.select_one("script[src*=\"static\"]")
+        print(main_js)
+        print(soup.select_one("script[src*='static']"))
         if not main_js:
-            return WEB_VIEW_VERSION
+            return WEB_VIEW_VER_FALLBACK
 
         main_js_url = SPLATNET3_URL + main_js.attrs["src"]
-        main_js_body = requests.get(main_js_url)
 
-        match = re.search(
-            r"\b(\d+\.\d+\.\d+)\b-\".concat.*?\b([0-9a-f]{40})\b", main_js_body.text)
-        if not match:
-            return WEB_VIEW_VERSION
+        app_head = {
+            "Accept":              "*/*",
+            "X-Requested-With":    "com.nintendo.znca",
+            "Sec-Fetch-Site":      "same-origin",
+            "Sec-Fetch-Mode":      "no-cors",
+            "Sec-Fetch-Dest":      "script",
+            # sending w/o lang, na_country, na_lang params
+            "Referer":             SPLATNET3_URL
+        }
+        if bhead is not None:
+            app_head["User-Agent"] = bhead.get("User-Agent")
+            app_head["Accept-Encoding"] = bhead.get("Accept-Encoding")
+            app_head["Accept-Language"] = bhead.get("Accept-Language")
 
-        version, revision = match.groups()
+        main_js_body = requests.get(
+            main_js_url, headers=app_head, cookies=app_cookies)
+
+        pattern = r"\b(?P<revision>[0-9a-f]{40})\b[\S]*?void 0[\S]*?\"revision_info_not_set\"\}`,.*?=`(?P<version>\d+\.\d+\.\d+)-"
+        match = re.search(pattern, main_js_body.text)
+        if match is None:
+            return WEB_VIEW_VER_FALLBACK
+
+        version, revision = match.group("version"), match.group("revision")
         return f"{version}-{revision[:8]}"
 
     async def get_bullet_discord(self, web_service_token, web_view_ver, app_user_agent, user_lang, user_country):
         """Returns a bulletToken."""
         NSO_VERSION = self.versions["NSO"]
+        SPLATNET3_URL = GLOBAL_SPLATNET3_URL
 
         app_head = {
             "Content-Length":   "0",
@@ -1139,13 +1045,14 @@ class makeConfig():
             "X-Web-View-Ver":   web_view_ver,
             "X-NACOUNTRY":      user_country,
             "Accept":           "*/*",
-            "Origin":           "https://api.lp1.av5ja.srv.nintendo.net",
+            "Origin":           SPLATNET3_URL,
             "X-Requested-With": "com.nintendo.znca"
         }
         app_cookies = {
-            "_gtoken": web_service_token  # X-GameWebToken
+            "_gtoken": web_service_token,  # X-GameWebToken
+            "_dnt": "1"
         }
-        url = "https://api.lp1.av5ja.srv.nintendo.net/api/bullet_tokens"
+        url = f"{SPLATNET3_URL}/api/bullet_tokens"
         r = requests.post(url, headers=app_head, cookies=app_cookies)
 
         error_message_dict = {
