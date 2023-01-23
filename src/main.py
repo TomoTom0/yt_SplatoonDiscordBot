@@ -2,7 +2,7 @@
 import discord
 from discord.ext import commands, tasks
 
-#import os
+# import os
 import sys
 import asyncio
 import datetime
@@ -11,8 +11,10 @@ import traceback
 import iksm_discord
 import config
 
+
 def _empty_func(**kwargs):
     return
+
 
 async def main():
     DISCORD_TOKEN = config.DISCORD_TOKEN
@@ -79,7 +81,6 @@ async def main():
             exc = f"{e}: {e.args}"
             print(f"Failed to load extension {extension}\n{exc}")
     sys.stdout.flush()
-
 
     @tasks.loop(seconds=SPLAT_UPLOAD_INTERVAL)
     async def loop():

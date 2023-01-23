@@ -2,6 +2,8 @@
 
 Discord Bot on Python for Splatoon with s3s and stat.ink
 
+[DiscordBot_Heroku_Stat.ink](https://github.com/TomoTom0/DiscordBot_Heroku_Stat.ink)の後継Repositoryです。
+
 ## Introduction
 
 自分で使用しているDiscord BotのScriptを整理しました。
@@ -9,7 +11,7 @@ Discord Bot on Python for Splatoon with s3s and stat.ink
 
 公開済みの[DiscordBot_Heroku_Stat.ink](https://github.com/TomoTom0/DiscordBot_Heroku_Stat.ink)が、仕様変更やSplatoon 2->3への移行およびそれに伴うs2s->s3sの移行へのため実用に耐えなくなったことを受け、このRepositoryを作成しました。
 
-s3sを用いてstat.inkへ戦績のアップロードを行います。(現在はlocalへの戦績保存のみ)
+s3sを用いてstat.inkへ戦績のアップロードを行います。(optionとしてlocalへの保存、localからのuploadもできます。)
 
 ## Environments
 
@@ -29,13 +31,14 @@ Herokuの無料枠はなくなってしまったそうです。
 [DiscordBot_Heroku_Stat.ink](https://github.com/TomoTom0/DiscordBot_Heroku_Stat.ink)より引用。ただし、Herokuは非対応です。
 
 
-### 事前準備
-- stat.ink : アカウント作成、API KEYコピー
-- discord : アカウント作成、DISCORD BOT TOKENコピー、BOTのserverへの追加
+### 事前準備 (必須)
+- **stat.ink** : アカウント作成、API KEYコピー
+- **discord** : アカウント作成、開発者登録、Application作成、DISCORD BOT TOKENコピー、BOTのserverへの追加、BOTの設定編集
     - 参考 [Discord Botアカウント初期設定ガイド for Developer](https://qiita.com/1ntegrale9/items/cb285053f2fa5d0cccdf)のうち**はじめに~サーバーへの登録**
 
 ### Bot起動まで
-`git clone`などでダウンロードし、`pip3 install -r requirements.txt`で必要なライブラリをインストールします。最後に`python3 src/main.py`でdiscord botを起動します。terminalにエラーメッセージが出なければ大丈夫です。`screen`は必要に応じて利用してください。
+
+`git clone`などでダウンロードし、`pip3 install -r requirements.txt`で必要なライブラリをインストールします。最後に`python3 src/main.py`でdiscord botを起動します。terminalにエラーメッセージが出なければ大丈夫です。`screen`や`nohup`などは必要に応じて利用してください。
 
 ### Intents設定
 
@@ -74,11 +77,35 @@ Discord Botでmessageなどを取り扱うには(招待リンク生成の項目�
 
 |コマンド|引数|説明|
 |-|-|-|
-|`?startIksm`|`STAT_INK_API_KEY`| 新たにiksm_sessionを取得し、botにアカウントを登録します。 事前にstat.inkの登録を完了し、API KEYを取得しておいてください。|
-|`?checkIksm`|`acc_name`|指定されたアカウントのiksm_sessionを表示します。|
-|`?rmIksm`|`acc_name`|指定されたアカウントの情報を削除します。|
+|`?startIksm`|`STAT_INK_API_KEY`?| 新たにiksm_sessionを取得し、botにアカウントを登録します。 事前にstat.inkの登録を完了し、API KEYを取得しておいてください。引数が省略された場合、interactiveに入力が求められます。|
+|`?checkIksm`|`acc_name`?|指定されたアカウントのiksm_sessionを表示します。引数が省略された場合、interactiveに入力が求められます。|
+|`?rmIksm`|`acc_name`?|指定されたアカウントの情報を削除します。引数が省略された場合、interactiveに入力が求められます。|
 |`?showIksm`|なし|登録されているnintendoアカウント一覧を表示します。|
-|`?upIksm`|なし|ただちに戦績チェックを行います。操作にはしばらく時間がかかります。|
+|`?upIksm`|`acc_name`?|ただちに戦績チェックを行います。操作にはしばらく時間がかかります。`acc_name`が入力された場合、指定したアカウントのみ戦績チェックします。|
+|`?upIksmFromLocal`|`acc_name`?|localの戦績をstat.inkにアップロードします。操作にはしばらく時間がかかります。`acc_name`が入力された場合、指定したアカウントのみ戦績チェックします。|
+
+### Accessibility
+
+**v1.2.1以降、新規登録されたNintendoアカウント情報へのアクセスに一定の制限を加えました。**
+これは1つのBOTが複数のサーバーに加えられる状況を想定したものです。
+既定の振る舞いは以下の表の通りです。
+
+|`?startIksm`実行場所|アクセスが許可される場所|
+|-|-|
+|サーバー|登録されたサーバー、および登録したユーザーとのDM|
+|DM|登録したユーザーとのDM|
+
+アクセス権限のない場所においては、Discord Botとのコマンドにおいて当該アカウントは登録されていないものとして扱われます。
+**v1.2.0以前に登録されていたNintendoアカウントについてはアクセスが無制限の状態です。**
+
+アクセス制限の情報は`configs_s3s/access_permission.json`内で管理されています。テキストファイルとして修正することで反映されます。
+`id`のリストとして`[-1]`が与えられた場合、その項目に関しては無制限となります。
+
+|key|value|
+|-|-|
+|guild|サーバー(guild)のidのリスト|
+|dm|discord userのidのリスト|
+|author|discord botからpermission_infoを編集できるuserのidのリスト (編集機能は未実装)|
 
 
 ## Future Works
@@ -91,6 +118,7 @@ Coming Soon...
 
 botのupdateへの対応や既存のbotとの併用を便利にするため、main.pyに触れずともconfig.pyのみで独自の変更を加えられるようにしました。
 本botが既定で対応していてかつ、config.pyで設定できる主な変数・関数は以下の通りです。もちろん、必要に応じた他の要素も追加可能です。
+`ext_splat.py`などを参考に`Cog`も積極的に利用・追加してください。
 
 |変数/関数名|既定値/引数|説明|
 |-|-|-|
