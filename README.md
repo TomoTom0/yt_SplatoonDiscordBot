@@ -105,7 +105,7 @@ Discord Botでmessageなどを取り扱うには(招待リンク生成の項目�
 |-|-|
 |guild|サーバー(guild)のidのリスト|
 |dm|discord userのidのリスト|
-|author|discord botからpermission_infoを編集できるuserのidのリスト (編集機能は未実装)|
+|author|discord botを通じてpermission_infoを編集できるuserのidのリスト (編集機能は未実装)|
 
 
 ## Future Works
