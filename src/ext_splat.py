@@ -165,8 +165,13 @@ class Splat(commands.Cog):
                     {"iksm_configs": json.dumps(json_files)})
             else:
                 for tmp_path in [f"{config_dir}/{acc_name_key}_config.txt", f"{config_dir3}/{acc_name_key}_config.txt"]:
-                    if os.path.isfile(tmp_path):
+                    if not os.path.isfile(tmp_path):
+                        continue
+                    try:
                         os.remove(tmp_path)
+                    except Exception as e:
+                        print(f"{e}: {e.args}")
+                        
 
         # check
         access_info = self.obtainAccessInfo(ctx)
