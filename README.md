@@ -23,9 +23,12 @@ Herokuの無料枠はなくなってしまったそうです。
 
 |環境変数|既定値|説明|
 |-|-|-|
-|`SPLATOON_DISCORD_BOT_TOKEN`|省略不可|discord bot用のtoken。取得しておく必要があります。|
+|`SPLATOON_DISCORD_BOT_TOKEN`|省略不可|discord botの`main`モードでのtoken。取得しておく必要があります。|
 |`SPLATOON_DISCORD_BOT_INTERVAL`|7200| 戦績アップロードの間隔 (単位は秒)。デフォルトは2時間。**900秒未満の場合は7200秒に変更されます。**|
 |`SPLATOON_DISCORD_BOT_UPLOAD`|true|定期戦績チェックでstat.inkにアップロードするか(true)、localにjsonファイルを保存するのみか(false)。デフォルトは前者。値はBoolean型で解釈されます。|
+|`SPLATOON_DISCORD_BOT_TOKEN_TEST`|省略可能|discord botの`test`モードでのtoken。省略された場合は`SPLATOON_DISCORD_BOT_TOKEN`が使用されます。|
+|`SPLATOON_DISCORD_BOT_IGNORED_CHANNELS_MAIN`|`main`モードでBOTが反応しないチャンネルのIDをカンマ(`,`)区切りでつなげたもの|
+|`SPLATOON_DISCORD_BOT_IGNORED_CHANNELS_TEST`|`test`モードでBOTが反応しないチャンネルのIDをカンマ(`,`)区切りでつなげたもの|
 
 ## Bot稼働まで
 
@@ -40,6 +43,8 @@ Herokuの無料枠はなくなってしまったそうです。
 ### Bot起動まで
 
 `git clone`などでダウンロードし、`pip3 install -r requirements.txt`で必要なライブラリをインストールします。最後に`python3 src/main.py`でdiscord botを起動します。terminalにエラーメッセージが出なければ大丈夫です。`screen`や`nohup`などは必要に応じて利用してください。
+
+`python3 src/main.py test`のように1番目の引数として`test`を置くと`test`モードになります。`test`モードでは戦績の自動チェックが行われません。環境チェックなどの際にご利用ください。
 
 ### Intents設定
 

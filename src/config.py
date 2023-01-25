@@ -26,6 +26,10 @@ const_paths = {
     "access_json_path": f"{os.path.dirname(__file__)}/../configs_s3s/access_permission.json"
 }
 
+ignored_channels = {
+    "main": str(os.environ.get("SPLATOON_DISCORD_BOT_IGNORED_CHANNELS_MAIN", "")).split(","),
+    "test": str(os.environ.get("SPLATOON_DISCORD_BOT_IGNORED_CHANNELS_TEST", "")).split(",")
+}
 
 _interval_tmp_str = str(os.environ.get("SPLATOON_DISCORD_BOT_INTERVAL", 7200))
 SPLAT_UPLOAD_INTERVAL = 7200 if not _interval_tmp_str.isdecimal() or int(
@@ -66,8 +70,10 @@ async def _additional_on_ready(bot):
 
 
 async def _additional_on_message_judge(bot, message):
-    flag_continue = True
-    return flag_continue
+    # flag_continue
+    if str(message.channel.id) in ignored_channels.get(BOT_MODE, []):
+        return False
+    return True
 
 
 async def _additional_on_message_remake(bot, message):
