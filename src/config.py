@@ -29,9 +29,14 @@ const_paths = {
     "access_json_path": f"{os.path.dirname(__file__)}/../configs_s3s/access_permission.json"
 }
 
-ignored_channels = {
+ignored_channels_dict = {
     "main": str(os.environ.get("SPLATOON_DISCORD_BOT_IGNORED_CHANNELS_MAIN", "")).split(","),
     "test": str(os.environ.get("SPLATOON_DISCORD_BOT_IGNORED_CHANNELS_TEST", "")).split(",")
+}
+
+noticed_channels_dict = {
+    "main": str(os.environ.get("SPLATOON_DISCORD_BOT_NOTICED_CHANNELS_MAIN", "")).split(","),
+    "test": str(os.environ.get("SPLATOON_DISCORD_BOT_NOTICED_CHANNELS_TEST", "")).split(",")
 }
 
 _interval_tmp_str = str(os.environ.get("SPLATOON_DISCORD_BOT_INTERVAL", 7200))
@@ -75,10 +80,20 @@ async def _additional_on_ready(bot):
 
 
 async def _additional_on_message_judge(bot, message):
-    # flag_continue
-    if str(message.channel.id) in ignored_channels.get(BOT_MODE, []):
-        return False
-    return True
+    ignored_channels=ignored_channels_dict.get(BOT_MODE, [])
+    noticed_channels=noticed_channels_dict.get(BOT_MODE, [])
+    channel_id=str(message.channel.id)
+    
+    if len(noticed_channels)>0:
+        if channel_id in noticed_channels:
+            return True
+        else:
+            return False
+    else:
+        if channel_id in ignored_channels:
+            return False
+        else:
+            return True
 
 
 async def _additional_on_message_remake(bot, message):
