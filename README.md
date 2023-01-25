@@ -12,6 +12,7 @@ Discord Bot on Python for Splatoon with s3s and stat.ink
 公開済みの[DiscordBot_Heroku_Stat.ink](https://github.com/TomoTom0/DiscordBot_Heroku_Stat.ink)が、仕様変更やSplatoon 2->3への移行およびそれに伴うs2s->s3sの移行へのため実用に耐えなくなったことを受け、このRepositoryを作成しました。
 
 s3sを用いてstat.inkへ戦績のアップロードを行います。(optionとしてlocalへの保存、localからのuploadもできます。)
+**戦績チェックに必要な`bullet_token`や`gtoken`もDiscord Botを通じて取得できます。**
 
 ## Environments
 
@@ -23,7 +24,7 @@ Herokuの無料枠はなくなってしまったそうです。
 |環境変数|既定値|説明|
 |-|-|-|
 |`SPLATOON_DISCORD_BOT_TOKEN`|省略不可|discord bot用のtoken。取得しておく必要があります。|
-|`SPLATOON_DISCORD_BOT_INTERVAL`|7200| 戦績アップロードの間隔 (単位は秒)。デフォルトは2時間。|
+|`SPLATOON_DISCORD_BOT_INTERVAL`|7200| 戦績アップロードの間隔 (単位は秒)。デフォルトは2時間。**900秒未満の場合は7200秒に変更されます。**|
 |`SPLATOON_DISCORD_BOT_UPLOAD`|true|定期戦績チェックでstat.inkにアップロードするか(true)、localにjsonファイルを保存するのみか(false)。デフォルトは前者。値はBoolean型で解釈されます。|
 
 ## Bot稼働まで
@@ -110,7 +111,8 @@ Discord Botでmessageなどを取り扱うには(招待リンク生成の項目�
 
 ## Future Works
 
-Coming Soon...
+- [ ] Splatoon2にもs2s(splatnet2statink)にあわせた範囲で対応する
+- [ ] Repl.itに対応して無料でDiscord Botを利用できるようにする
 
 ## Botを自分好みに改造したくなったら
 [Discord Bot 最速チュートリアル【Python&Heroku&GitHub】](https://qiita.com/1ntegrale9/items/aa4b373e8895273875a8#8-dynos%E3%81%AE%E8%A8%AD%E5%AE%9A)を参考にしてください。
@@ -118,7 +120,7 @@ Coming Soon...
 
 botのupdateへの対応や既存のbotとの併用を便利にするため、main.pyに触れずともconfig.pyのみで独自の変更を加えられるようにしました。
 本botが既定で対応していてかつ、config.pyで設定できる主な変数・関数は以下の通りです。もちろん、必要に応じた他の要素も追加可能です。
-`ext_splat.py`などを参考に`Cog`も積極的に利用・追加してください。
+`ext_splat.py`などを参考にCogも積極的に利用・追加してください。
 
 |変数/関数名|既定値/引数|説明|
 |-|-|-|
