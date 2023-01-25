@@ -538,7 +538,7 @@ class makeConfig():
                            "f_gen": "https://api.imink.app/f",
                            "gtoken": self.gtoken, "bullettoken": self.bullet_token}
 
-        print(config_data, config_data_s3s)
+        #print(config_data, config_data_s3s)
 
         # save config
         time_10 = format(int(time.time()), "010")
@@ -956,6 +956,7 @@ class makeConfig():
             url, headers=api_app_head, data=api_body)
         # print(api_response.ok, api_response.content)
         if not api_response.ok:
+            print("elifessler.com/s2s/api/gen2 : error")
             print(api_response.text)
             return None
         return json.loads(api_response.text).get("hash", None)

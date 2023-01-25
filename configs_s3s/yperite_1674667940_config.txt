@@ -1,0 +1,6 @@
+{
+    "api_key": "skip",
+    "cookie": "55468e8a427ee352160474cb7fbc2c6db8f753ed",
+    "session_token": "eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOjExMTkwMzM2NzQyLCJzdDpzY3AiOlswLDgsOSwxNywyM10sImlzcyI6Imh0dHBzOi8vYWNjb3VudHMubmludGVuZG8uY29tIiwiZXhwIjoxNzM3NzM5OTMwLCJzdWIiOiIyYWRlYTU2MjAwZTIwMTA0IiwidHlwIjoic2Vzc2lvbl90b2tlbiIsImF1ZCI6IjcxYjk2M2MxYjdiNmQxMTkiLCJpYXQiOjE2NzQ2Njc5MzB9.HNdbHj8LmCrUljMgneiveWO6bwxj2M96zO5dJFmXQ1E",
+    "user_lang": "ja-JP"
+}
