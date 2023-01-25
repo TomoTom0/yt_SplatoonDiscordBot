@@ -39,7 +39,7 @@ async def main():
     @bot.event
     async def on_ready():
         await additional_functions_dict.get("on_ready", _empty_func)(bot)
-        print(f"Logged in as\n{bot.user.name}\n{bot.user.id}\n------")
+        print(f"Logged in as\n    {bot.user.name}\n    {BOT_MODE}\n    {bot.user.id}\n------")
         sys.stdout.flush()
 
     # メッセージ受信時に動作する処理

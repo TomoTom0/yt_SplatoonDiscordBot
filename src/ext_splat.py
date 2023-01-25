@@ -15,6 +15,7 @@ import config
 
 config_dir = config.const_paths["config_dir"]
 config_dir3 = config.const_paths["config_dir3"]
+DM_IS_REQUIRED = config.DM_IS_REQUIRED
 
 
 class Splat(commands.Cog):
@@ -72,6 +73,12 @@ class Splat(commands.Cog):
     @commands.command(description="", pass_context=True)
     async def startIksm(self, ctx: commands.Context, STAT_INK_API_KEY=""):
         """新たにiksm_sessionを取得し、botにアカウントを登録します。\nstat.inkの登録を完了し、API KEYを取得しておいてください。"""
+        
+        if DM_IS_REQUIRED and ctx.channel.guild is not None:
+            content="セキュリティの観点から`?startIksm`はBotとのDMで実行してください。"
+            await ctx.send(content)
+            return
+        
         # 各種API KEYの入力確認
         # 例外としてskipはOK。skipの場合、戦績のuploadはされません。
         if len(STAT_INK_API_KEY) != 43 and STAT_INK_API_KEY != "skip":
@@ -164,8 +171,15 @@ class Splat(commands.Cog):
                 res = config.update_env(
                     {"iksm_configs": json.dumps(json_files)})
             else:
-                os.remove(f"{config_dir}/{acc_name_key}_config.txt")
-                os.remove(f"{config_dir3}/{acc_name_key}_config.txt")
+                for tmp_path in [f"{config_dir}/{acc_name_key}_config.txt", f"{config_dir3}/{acc_name_key}_config.txt"]:
+                    if not os.path.isfile(tmp_path):
+                        continue
+                    print(f"{tmp_path} will be removed")
+                    try:
+                        os.remove(tmp_path)
+                    except Exception as e:
+                        print(f"{e}: {e.args}")
+                        
 
         # check
         access_info = self.obtainAccessInfo(ctx)
@@ -176,6 +190,8 @@ class Splat(commands.Cog):
             acc_name = acc_name_set["name"]
         else:
             acc_name_set = await iksm_discord.checkAcc(ctx, acc_name, access_info=access_info)
+        if acc_name_set.get("name") == "":
+            return
         await ctx.channel.send(f"Do you want to remove `{acc_name}`'s config file?(`yes/no`)")
 
         def check_msg(msg):
