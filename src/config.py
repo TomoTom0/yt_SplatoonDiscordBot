@@ -1,4 +1,5 @@
 import os
+import sys
 import discord
 from dotenv import load_dotenv
 
@@ -10,9 +11,11 @@ IsHeroku = False
 
 # 環境変数からDiscord bot tokenを読み取る
 DISCORD_TOKENS = {
-    "main": os.environ["SPLATOON_DISCORD_BOT_TOKEN"]}
+    "main": os.environ["SPLATOON_DISCORD_BOT_TOKEN"],
+    "test": os.environ.get("SPLATOON_DISCORD_BOT_TOKEN_TEST", os.environ["SPLATOON_DISCORD_BOT_TOKEN"])
+}
 
-#dir_path_present = os.path.dirname(__file__)
+# dir_path_present = os.path.dirname(__file__)
 const_paths = {
     "config_dir": "/tmp" if IsHeroku else f"{os.path.dirname(__file__)}/../configs_s2s",
     "config_dir3": "/tmp" if IsHeroku else f"{os.path.dirname(__file__)}/../configs_s3s",
@@ -24,12 +27,13 @@ const_paths = {
 }
 
 
-_interval_tmp_str = str(os.environ.get("SPLATOON_DISCORD_BOT_INTERVAL", 900*8))
-SPLAT_UPLOAD_INTERVAL = 900*8 if not _interval_tmp_str.isdecimal() or int(
+_interval_tmp_str = str(os.environ.get("SPLATOON_DISCORD_BOT_INTERVAL", 7200))
+SPLAT_UPLOAD_INTERVAL = 7200 if not _interval_tmp_str.isdecimal() or int(
     _interval_tmp_str) < 900 else int(_interval_tmp_str)
 
 
-SPLAT_UPLOAD_IS_TRUE = bool(os.environ.get("SPLATOON_DISCORD_BOT_UPLOAD", True))
+SPLAT_UPLOAD_IS_TRUE = bool(os.environ.get(
+    "SPLATOON_DISCORD_BOT_UPLOAD", True))
 _splatOption3_dict = {True: "-r", False: "-o"}
 SPLAT_OPTION3 = _splatOption3_dict[SPLAT_UPLOAD_IS_TRUE]
 
@@ -41,9 +45,11 @@ COMMAND_PREFIX = "?"
 
 # --------------
 
+python_args = len(sys.argv)
 
 # main
-BOT_MODE = "main"
+BOT_MODE = "test" if len(
+    python_args) > 1 and python_args[1] == "test" else "main"
 DISCORD_TOKEN = DISCORD_TOKENS[BOT_MODE]
 extensions_dict = {  # cogの導入
     "default": ["ext_splat"]
