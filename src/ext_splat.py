@@ -12,7 +12,6 @@ import asyncio
 # from discord_slash import cog_ext, SlashContext
 
 import config
-guild_ids = config.guild_ids
 
 config_dir = config.const_paths["config_dir"]
 config_dir3 = config.const_paths["config_dir3"]
