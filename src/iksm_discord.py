@@ -325,27 +325,31 @@ async def auto_upload_iksm(fromLocal=False, acc_name_key_in=None):
             sys.stdout.flush()
 
 
-def obtain_nextInterval(interval):
+def obtain_nextInterval(interval, start_time=None):
     interval_tmp_str = str(interval)
-    interval_valid = 900*8 if not interval_tmp_str.isdecimal() or \
+    interval_valid = 7200 if not interval_tmp_str.isdecimal() or \
         int(interval_tmp_str) < 900 else int(interval_tmp_str)
-    nowtime = datetime.datetime.now()
-    target_time_tmp = interval_valid + nowtime.minute*60 + nowtime.second
-    next_interval = interval_valid - target_time_tmp % 900
+    nowtime = datetime.datetime.now() if start_time is None else start_time
+    tmp_next_interval=int(start_time.timestamp() + interval_valid - nowtime.timestamp())
+    if tmp_next_interval < 900:
+        return 900
+    next_interval=tmp_next_interval - int(tmp_next_interval + start_time.timestamp()) % 900
+    #target_time_tmp = interval_valid + nowtime.minute*60 + nowtime.second
+    #next_interval = interval_valid - target_time_tmp % 900
     return next_interval
 
 
-async def autoUpload_OneCycle(interval=900*8, execute=True):
+async def autoUpload_OneCycle(interval=7200, execute=True):
     nowtime = datetime.datetime.now()
     if execute is True:
         await auto_upload_iksm()
         # pass
-    next_interval = obtain_nextInterval(interval)
+    next_interval = obtain_nextInterval(interval, start_time=nowtime)
     print(f"{nowtime} / Next Splatoon Results Check: in {next_interval} sec")
     return next_interval
 
 
-async def __autoUploadCycle_old(next_time=900*8324496):
+async def __autoUploadCycle_old(next_time=7200):
     nowtime = datetime.datetime.now()
     tmp_next_time = next_time-(nowtime.minute*60 + nowtime.second) % next_time
     print(f"{nowtime} / Next Splatoon Results Check: in {tmp_next_time} sec")
@@ -534,7 +538,7 @@ class makeConfig():
                            "f_gen": "https://api.imink.app/f",
                            "gtoken": self.gtoken, "bullettoken": self.bullet_token}
 
-        print(config_data, config_data_s3s)
+        #print(config_data, config_data_s3s)
 
         # save config
         time_10 = format(int(time.time()), "010")
@@ -952,6 +956,7 @@ class makeConfig():
             url, headers=api_app_head, data=api_body)
         # print(api_response.ok, api_response.content)
         if not api_response.ok:
+            print("elifessler.com/s2s/api/gen2 : error")
             print(api_response.text)
             return None
         return json.loads(api_response.text).get("hash", None)

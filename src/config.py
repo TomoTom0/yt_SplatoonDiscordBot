@@ -1,5 +1,9 @@
 import os
 import discord
+from dotenv import load_dotenv
+
+# read .env
+load_dotenv()
 
 # とりあえずHerokuには非対応
 IsHeroku = False
