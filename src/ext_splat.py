@@ -190,6 +190,8 @@ class Splat(commands.Cog):
             acc_name = acc_name_set["name"]
         else:
             acc_name_set = await iksm_discord.checkAcc(ctx, acc_name, access_info=access_info)
+        if acc_name_set is None:
+            return
         await ctx.channel.send(f"Do you want to remove `{acc_name}`'s config file?(`yes/no`)")
 
         def check_msg(msg):
