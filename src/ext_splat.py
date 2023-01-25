@@ -164,8 +164,9 @@ class Splat(commands.Cog):
                 res = config.update_env(
                     {"iksm_configs": json.dumps(json_files)})
             else:
-                os.remove(f"{config_dir}/{acc_name_key}_config.txt")
-                os.remove(f"{config_dir3}/{acc_name_key}_config.txt")
+                for tmp_path in [f"{config_dir}/{acc_name_key}_config.txt", f"{config_dir3}/{acc_name_key}_config.txt"]:
+                    if os.path.isfile(tmp_path):
+                        os.remove(tmp_path)
 
         # check
         access_info = self.obtainAccessInfo(ctx)
