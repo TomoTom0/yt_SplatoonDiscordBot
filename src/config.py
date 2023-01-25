@@ -1,10 +1,13 @@
 import os
 import sys
 import discord
+import glob2
 from dotenv import load_dotenv
 
 # read .env
-load_dotenv()
+env_files=sorted(glob2.glob("../../**/.env"))
+if len(env_files) > 0:
+    load_dotenv(env_files[0])
 
 # とりあえずHerokuには非対応
 IsHeroku = False
