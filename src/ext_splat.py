@@ -174,6 +174,7 @@ class Splat(commands.Cog):
                 for tmp_path in [f"{config_dir}/{acc_name_key}_config.txt", f"{config_dir3}/{acc_name_key}_config.txt"]:
                     if not os.path.isfile(tmp_path):
                         continue
+                    print(f"{tmp_path} will be removed")
                     try:
                         os.remove(tmp_path)
                     except Exception as e:

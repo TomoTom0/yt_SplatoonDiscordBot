@@ -82,10 +82,10 @@ def updateAccessInfo(acc_name_key_in, permission_info_in):
     }
     old_body = {
         **json_read.get("old_body", {}),
-        **{time.time(): {
+        **({time.time(): {
             acc_name_key_in: permission_info
-        }
-        }
+            } 
+        } if permission_info != {} else {})
     }
     new_json_read = {
         **json_read,
