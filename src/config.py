@@ -45,7 +45,7 @@ COMMAND_PREFIX = "?"
 
 # --------------
 
-python_args = len(sys.argv)
+python_args = sys.argv
 
 # main
 BOT_MODE = "test" if len(
