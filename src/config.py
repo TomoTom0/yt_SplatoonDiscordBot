@@ -51,9 +51,11 @@ COMMAND_PREFIX = "?"
 
 python_args = sys.argv
 
+
+DM_IS_REQUIRED = "DM" in python_args
+
 # main
-BOT_MODE = "test" if len(
-    python_args) > 1 and python_args[1] == "test" else "main"
+BOT_MODE = "test" if "test" in python_args else "main"
 DISCORD_TOKEN = DISCORD_TOKENS[BOT_MODE]
 extensions_dict = {  # cogの導入
     "default": ["ext_splat"]

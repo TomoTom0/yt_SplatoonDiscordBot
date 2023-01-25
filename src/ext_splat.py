@@ -15,6 +15,7 @@ import config
 
 config_dir = config.const_paths["config_dir"]
 config_dir3 = config.const_paths["config_dir3"]
+DM_IS_REQUIRED = config.DM_IS_REQUIRED
 
 
 class Splat(commands.Cog):
@@ -72,6 +73,12 @@ class Splat(commands.Cog):
     @commands.command(description="", pass_context=True)
     async def startIksm(self, ctx: commands.Context, STAT_INK_API_KEY=""):
         """新たにiksm_sessionを取得し、botにアカウントを登録します。\nstat.inkの登録を完了し、API KEYを取得しておいてください。"""
+        
+        if DM_IS_REQUIRED and ctx.channel.guild is not None:
+            content="セキュリティの観点から`?startIksm`はBotとのDMで実行してください。"
+            await ctx.send(content)
+            return
+        
         # 各種API KEYの入力確認
         # 例外としてskipはOK。skipの場合、戦績のuploadはされません。
         if len(STAT_INK_API_KEY) != 43 and STAT_INK_API_KEY != "skip":
