@@ -83,8 +83,11 @@ async def _additional_on_message_judge(bot, message):
     ignored_channels=ignored_channels_dict.get(BOT_MODE, [])
     noticed_channels=noticed_channels_dict.get(BOT_MODE, [])
     channel_id=str(message.channel.id)
+    isDM=message.guild is None
     
-    if len(noticed_channels)>0:
+    if isDM is True:
+        return True
+    elif len(noticed_channels)>0:
         if channel_id in noticed_channels:
             return True
         else:
