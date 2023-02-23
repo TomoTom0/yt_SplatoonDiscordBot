@@ -1,5 +1,8 @@
 .*
 memo*
+config*/*.json
+config*/*.txt
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
