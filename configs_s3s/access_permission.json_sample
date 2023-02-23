@@ -1,0 +1,20 @@
+{
+    "body": {
+        "accountName_1674667940": {
+            "dm": [
+                DISCORD_USER_ID
+            ],
+            "guild": [
+                DISCORD_SERVER_ID
+            ],
+            "author": [
+                DISCORD_USER_ID
+            ]
+        }
+    },
+    "old_body": {
+        "EdittedTime": {
+            "accountName_1674667940": {}
+        }
+    }
+}

@@ -27,8 +27,12 @@ Herokuの無料枠はなくなってしまったそうです。
 |`SPLATOON_DISCORD_BOT_INTERVAL`|7200| 戦績アップロードの間隔 (単位は秒)。デフォルトは2時間。**900秒未満の場合は7200秒に変更されます。**|
 |`SPLATOON_DISCORD_BOT_UPLOAD`|true|定期戦績チェックでstat.inkにアップロードするか(true)、localにjsonファイルを保存するのみか(false)。デフォルトは前者。値はBoolean型で解釈されます。|
 |`SPLATOON_DISCORD_BOT_TOKEN_TEST`|省略可能|discord botの`test`モードでのtoken。省略された場合は`SPLATOON_DISCORD_BOT_TOKEN`が使用されます。|
-|`SPLATOON_DISCORD_BOT_IGNORED_CHANNELS_MAIN`|`main`モードでBOTが反応しないチャンネルのIDをカンマ(`,`)区切りでつなげたもの|
-|`SPLATOON_DISCORD_BOT_IGNORED_CHANNELS_TEST`|`test`モードでBOTが反応しないチャンネルのIDをカンマ(`,`)区切りでつなげたもの|
+|`SPLATOON_DISCORD_BOT_IGNORED_CHANNELS_MAIN`||`main`モードでBOTが反応しないチャンネルのIDをカンマ(`,`)区切りでつなげたもの|
+|`SPLATOON_DISCORD_BOT_IGNORED_CHANNELS_TEST`||`test`モードでBOTが反応しないチャンネルのIDをカンマ(`,`)区切りでつなげたもの|
+|`SPLATOON_DISCORD_BOT_NOTICED_CHANNELS_MAIN`||`main`モードでBOTが反応するチャンネルのIDをカンマ(`,`)区切りでつなげたもの|
+|`SPLATOON_DISCORD_BOT_NOTICED_CHANNELS_TEST`||`test`モードでBOTが反応するチャンネルのIDをカンマ(`,`)区切りでつなげたもの|
+
+なお、各モードNOTICED_CHANNELSが空でない場合、IGNORED_CHANNELSは無視されます。
 
 ## Bot稼働まで
 
@@ -36,9 +40,10 @@ Herokuの無料枠はなくなってしまったそうです。
 
 
 ### 事前準備 (必須)
-- **stat.ink** : アカウント作成、API KEYコピー
-- **discord** : アカウント作成、開発者登録、Application作成、DISCORD BOT TOKENコピー、BOTのserverへの追加、BOTの設定編集
+- **stat.ink**: アカウント作成、API KEYコピー
+- **discord**: アカウント作成、開発者登録、Application作成、DISCORD BOT TOKENコピー、BOTのserverへの追加、BOTの設定編集
     - 参考 [Discord Botアカウント初期設定ガイド for Developer](https://qiita.com/1ntegrale9/items/cb285053f2fa5d0cccdf)のうち**はじめに~サーバーへの登録**
+- **Nintendo**: 戦績チェックはSplatoon3をプレイしたNintendoアカウントが必要です。また、**あらかじめ既定のブラウザでNintendoアカウントにログインしておくとスムーズに進みます**。パスワードを忘れた場合、面倒くさがらずにパスワードをリセットしましょう。
 
 ### Bot起動まで
 
@@ -59,18 +64,22 @@ Discord Botでmessageなどを取り扱うには(招待リンク生成の項目�
 ### BotへのNintendoアカウント登録
 
 `?startIksm <STATINK_API_KEY>`
-1. stat.inkのAPI KEYを用意しておきます。
+1. [stat.ink](https://stat.ink/)でアカウント登録を行い、API KEYをコピーします。
+
+<img with="80%" src="img/stat_ink_API.png"/>
+
 2. botとのDMなどで`?startIksm <STATINK_API_KEY>`のように、`?startIksm`に続けてAPI KEYを入力して送信します。
 (**botと同じサーバーに加入していれば、アカウントの設定にもよりますが、そのbotとDMを行うことが可能です。**)
 
 > ※注意
 **API KEYやTOKENなどと呼ばれるものは、すべからくアカウント名とパスワードのセットと等価です。他人にばれることはとても危険なことです。**
-家族やごく親しい友人しかいないサーバーでは大丈夫かもしれませんが、できるだけbotとのDMで`?startIksm`は行ってください。
+家族やごく親しい友人しかいないサーバーでは大丈夫かもしれませんが、**できるだけbotとのDMで`?startIksm`は行ってください。**
 
 3. すると、botからURLが送られてくるのでそのリンクをタップします。
 <img with="80%" src="img/discord_startIksm.png"/>
-4. リンク先でログインすると、連携アカウントの選択画面になるので、
-**「この人にする」を右クリック(スマホなら長押し)して、リンク先のURLをコピーします。**
+
+4. リンク先でログインすると、連携アカウントの選択画面になるので、**「この人にする」を右クリック(スマホなら長押し)して、リンク先のURLをコピーします。**
+時間がかかりすぎるとタイムアウトとなり、`?startIksm`からやり直すことになります。
 <img with="80%" src="img/nintendo_select.png"/>
 
 5. discordに戻り、コピーしたリンクを貼り付け、少し待つと`新たにアカウントが登録されました。`と表示されます。

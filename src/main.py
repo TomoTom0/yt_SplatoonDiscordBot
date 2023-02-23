@@ -12,7 +12,7 @@ import iksm_discord
 import config
 
 
-def _empty_func(**kwargs):
+async def _empty_func(**kwargs):
     return
 
 
@@ -47,6 +47,7 @@ async def main():
     async def on_message(message_orig):
         flag_continue = await additional_functions_dict.get("on_message_judge", _empty_func)(bot, message_orig)
         message_new = await additional_functions_dict.get("on_message_remake", _empty_func)(bot, message_orig)
+
         if flag_continue is False:
             return
         elif isinstance(message_new, discord.Message):
@@ -55,7 +56,6 @@ async def main():
             message = message_orig
 
         await additional_functions_dict.get("on_message", _empty_func)(bot, message_orig)
-
         # メッセージ送信者がBotだった場合は無視する
         if message.author.bot is True:
             return
@@ -66,12 +66,14 @@ async def main():
         except Exception as e:
             error_message = f"エラーが発生しました。\n{traceback.format_exc()}"
             print(error_message)
+            sys.stdout.flush()
         sys.stdout.flush()
 
     @bot.event
     async def on_command_error(exception: Exception, ctx: commands.Context):
         await additional_functions_dict.get("on_command_error", _empty_func)(bot, ctx)
         print(traceback.format_exc())
+        sys.stdout.flush()
 
     startup_extensions = commands.Context.extensions
     for extension in startup_extensions:

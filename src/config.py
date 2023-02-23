@@ -5,7 +5,7 @@ import glob2
 from dotenv import load_dotenv
 
 # read .env
-env_files=sorted(glob2.glob("../../**/.env"))
+env_files = sorted(glob2.glob("../../**/.env"))
 if len(env_files) > 0:
     load_dotenv(env_files[0])
 
@@ -80,11 +80,16 @@ async def _additional_on_ready(bot):
 
 
 async def _additional_on_message_judge(bot, message):
-    ignored_channels=ignored_channels_dict.get(BOT_MODE, [])
-    noticed_channels=noticed_channels_dict.get(BOT_MODE, [])
-    channel_id=str(message.channel.id)
-    
-    if len(noticed_channels)>0:
+    ignored_channels = [s for s in ignored_channels_dict.get(
+        BOT_MODE, []) if len(s) > 0]
+    noticed_channels = [s for s in noticed_channels_dict.get(
+        BOT_MODE, []) if len(s) > 0]
+    channel_id = str(message.channel.id)
+    isDM = message.guild is None
+
+    if isDM is True:
+        return True
+    elif len(noticed_channels) > 0:
         if channel_id in noticed_channels:
             return True
         else:
