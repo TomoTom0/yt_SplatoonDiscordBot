@@ -226,8 +226,13 @@ class Splat(commands.Cog):
     async def upIksm(self, ctx: commands.Context, acc_name=""):
         """ただちにstat.inkへ戦績をアップロードします。"""
         await ctx.send("stat.inkへのアップロードを開始します。")
+        print(1)
         access_info = self.obtainAccessInfo(ctx)
+        print(access_info)
+        sys.stdout.flush()
         acc_name_set = await iksm_discord.checkAcc(ctx, acc_name, access_info=access_info)
+        print(acc_name_set)
+        sys.stdout.flush()
         await iksm_discord.auto_upload_iksm(fromLocal=False, acc_name_key_in=acc_name_set.get("key", None))
         await ctx.send("バックグラウンドで処理しています。詳細はログを確認してください。")
 

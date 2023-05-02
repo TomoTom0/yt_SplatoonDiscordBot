@@ -102,6 +102,7 @@ def updateAccessInfo(acc_name_key_in, permission_info_in):
 def checkAccessInfo(acc_name_key_in="", access_info={}):
     if access_info.get("check", False) is False:
         return True
+
     acc_info = obtainAccInfo(acc_name_key=acc_name_key_in, access_info={})
     if acc_info is None:
         return False
@@ -235,7 +236,7 @@ async def _upload_iksm(config_name: str, config_dir: str, config_config_dir: str
 
 async def auto_upload_iksm(fromLocal=False, acc_name_key_in=None):
     # auto upload
-    splat_path = GLOBAL_SPLAT_DIR
+    splat_path3 = GLOBAL_SPLAT_DIR3
     if False:  # GLOBAL_ISHEROKU is True:  # for Heroku
         before_config_tmp = json.loads(os.getenv("iksm_configs", "{}"))
         before_config_jsons = eval(before_config_tmp) if isinstance(
@@ -247,12 +248,12 @@ async def auto_upload_iksm(fromLocal=False, acc_name_key_in=None):
             with open(f"{GLOBAL_CONFIG_DIR}/config.txt", "w") as f:
                 json.dump(v, f)
             subprocess.run(
-                ["python3", f"{splat_path}/splatnet2statink.py", "-r"])
+                ["python3", f"{splat_path3}/splatnet2statink.py", "-r"])
             with open(f"{GLOBAL_CONFIG_DIR}/config.txt") as f:
                 v = json.load(f)
             before_config_jsons[acc_name] = v
     else:  # for not Heroku
-        config_dir = GLOBAL_CONFIG_DIR3
+        config_dir3 = GLOBAL_CONFIG_DIR3
         config_names = obtainConfigPaths(flag_path=False)
         for config_name in config_names:
             if acc_name_key_in is not None and acc_name_key_in != config_name:
@@ -300,7 +301,10 @@ async def auto_upload_iksm(fromLocal=False, acc_name_key_in=None):
                             shutil.move(out_dirPath, done_dirPath)
                             break
                         splat_option_manual = f"-i \"{json_args_0}\" \"{json_args_1}\""
-                        success = await _upload_iksm(config_name, config_dir, GLOBAL_SPLAT_DIR3, f"{GLOBAL_SPLAT_DIR3}/s3s.py", splat_option_manual)
+                        success = await _upload_iksm(config_name, config_dir3, 
+                                                     GLOBAL_SPLAT_DIR3, f"{GLOBAL_SPLAT_DIR3}/s3s.py",
+                                                     splat_option_manual)
+                        sys.stdout.flush()
                         if fromLocal is True and success is True:
                             if os.path.isfile(done_dirPath):
                                 os.remove(done_dirPath)
@@ -312,11 +316,13 @@ async def auto_upload_iksm(fromLocal=False, acc_name_key_in=None):
                 # default
                 for _try_count in range(3):
                     print(f"    try count: {_try_count}")
-                    success = await _upload_iksm(config_name, config_dir, GLOBAL_SPLAT_DIR3, f"{GLOBAL_SPLAT_DIR3}/s3s.py", GLOBAL_SPLAT_OPTION3)
+                    success = await _upload_iksm(config_name, config_dir3,
+                                                 GLOBAL_SPLAT_DIR3, f"{GLOBAL_SPLAT_DIR3}/s3s.py", GLOBAL_SPLAT_OPTION3)
                     if GLOBAL_SPLAT_UPLOADISTRUE is False:
                         os.makedirs(out_dir, exist_ok=True)
                         export_dirs = glob2.glob(f"./export-*")
                         # print(glob2.glob(f"./export-*"), glob2.glob(f"./{GLOBAL_SPLAT_DIR3}/export-*"))
+                        sys.stdout.flush()
                         if len(export_dirs) == 0:
                             continue
                         for dirName in export_dirs:
@@ -375,7 +381,9 @@ class makeConfig():
         self.session = requests.Session()
         self.ctx = None
         self.isHeroku = GLOBAL_ISHEROKU
-        self.config_dir = GLOBAL_CONFIG_DIR3
+        self.config_dir2 = GLOBAL_CONFIG_DIR
+        self.config_dir3 = GLOBAL_CONFIG_DIR3
+        self.config_dir = self.config_dir3
 
     # ## obtain versions
     """def obtainGitHubContent(self, user: str, repo: str, path: str):
@@ -477,7 +485,8 @@ class makeConfig():
     # ## make config
     async def make_config_discord(self, API_KEY, ctx=None, print_session=False):
         self.ctx = ctx
-        config_dir = self.config_dir
+        config_dir3 = self.config_dir3
+        config_dir2 = self.config_dir2
         userLang = self.USER_LANG
         NSO_VERSION = self.versions["NSO"]
 
@@ -555,12 +564,13 @@ class makeConfig():
             config.update_env({"iksm_configs": json.dumps(json_configs)})
         else:  # for not Heroku
             # s3s
-            with open(f"{config_dir}/{acc_name}_{time_10}_config.txt", "w") as f:
+            os.makedirs(config_dir3, exist_ok=True)
+            with open(f"{config_dir3}/{acc_name}_{time_10}_config.txt", "w") as f:
                 f.write(json.dumps(config_data_s3s, indent=4,
                                    sort_keys=True, separators=(",", ": ")))
             # s2s
-            os.makedirs(config_dir, exist_ok=True)
-            with open(f"{config_dir}/{acc_name}_{time_10}_config.txt", "w") as f:
+            os.makedirs(config_dir2, exist_ok=True)
+            with open(f"{config_dir2}/{acc_name}_{time_10}_config.txt", "w") as f:
                 f.write(json.dumps(config_data, indent=4,
                                    sort_keys=True, separators=(",", ": ")))
 
