@@ -237,7 +237,7 @@ class Splat(commands.Cog):
         await ctx.send("stat.inkへ戦績jsonファイルのアップロードを開始します。")
         access_info = self.obtainAccessInfo(ctx)
         acc_name_set = await iksm_discord.checkAcc(ctx, acc_name, access_info=access_info)
-        await iksm_discord.auto_upload_iksm(acc_name_key_in=acc_name_set.get("key", None), fromLocal=True)
+        await iksm_discord.auto_upload_iksm(acc_name_key_in=acc_name_set.get("key", None), fromLocal=True, ctx=ctx)
         await ctx.send("バックグラウンドで処理しています。詳細はログを確認してください。")
 
 

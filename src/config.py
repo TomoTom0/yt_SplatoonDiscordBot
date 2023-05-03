@@ -2,6 +2,7 @@ import os
 import sys
 import discord
 import glob2
+import requests
 from dotenv import load_dotenv
 
 # read .env
@@ -71,6 +72,30 @@ extensions_dict = {  # cogの導入
 
 description = f"stat.inkへ戦績自動アップロードを行うbotです。\nまずはstat.inkのAPI KEYを用意してください。\n" +\
     "詳しい使い方はこちら -> https://github.com/TomoTom0/yt_SplatoonDiscordBot"
+
+# --------- webhook -----------
+
+error_webhooks_dict = {
+    "main": str(os.environ.get("SPLATOON_DISCORD_BOT_ERROR_WEBHOOKS_MAIN", "")).split(" "),
+    "test": str(os.environ.get("SPLATOON_DISCORD_BOT_ERROR_WEBHOOKS_TEST", "")).split(" ")
+}
+
+async def postWebhook_all(**kwargs):
+    for url in error_webhooks_dict.get(BOT_MODE):
+        await postWebhook(url, **kwargs)
+    
+
+async def postWebhook(url, **kwargs):
+    # discord webhook
+    if url.startswith("https://discord.com/api/webhooks/"):
+        content=kwargs.get("content")
+        if not isinstance(content, str) or len(content)==0:
+            print(f"Error occured with posting webhook to {url} about {kwargs}", flush=True)
+            return False
+        body = {"content":content}
+        res = requests.post(url=url, json=body)
+        print(res, flush=True)
+        return True
 
 # --------- additional functions -----------
 

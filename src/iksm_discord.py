@@ -41,6 +41,12 @@ GLOBAL_SPLAT_OPTION3 = config.SPLAT_OPTION3
 GLOBAL_SPLAT_UPLOADISTRUE = config.SPLAT_UPLOAD_IS_TRUE
 GLOBAL_ACCESS_JSON_PATH = config.const_paths.get("access_json_path", None)
 
+#GLOBAL_BOT_MODE = config.BOT_MODE
+try:
+    postWebhook_all = config.postWebhook_all
+except Exception as e:
+    postWebhook_all = None
+
 GLOBAL_SPLATNET3_URL = "https://api.lp1.av5ja.srv.nintendo.net"
 GLOBAL_GRAPHQL_URL = "https://api.lp1.av5ja.srv.nintendo.net/api/graphql"
 # GLOBAL_WEB_VIEW_VERSION = "2.0.0-bd36a652"
@@ -201,8 +207,7 @@ async def checkAcc(ctx: commands.Context, acc_name: str, access_info={}):
 
 # ## upload functions
 
-
-async def _asyncio_run(cmd: str):
+async def _asyncio_run(cmd: str, ctx=None):
     proc = await asyncio.create_subprocess_shell(
         cmd,
         stdout=asyncio.subprocess.PIPE,
@@ -215,9 +220,19 @@ async def _asyncio_run(cmd: str):
         print(f"[stdout]\n{stdout.decode()}")
     if stderr:
         print(f"[stderr]\n{stderr.decode()}")
+        content=f"Error occured:\n\n```bash\n# stderr\n{stderr.decode()}\n```"
+        _print_error(content, ctx)
+
+async def _print_error(error_content: str, ctx=None):
+    if isinstance(ctx, commands.Context):
+        await ctx.channel.send(error_content)
+    if callable(postWebhook_all):
+            postWebhook_all(content=error_content)
+    
 
 
-async def _upload_iksm(config_name: str, config_dir: str, config_config_dir: str, splat_script: str, splat_option: str):
+
+async def _upload_iksm(config_name: str, config_dir: str, config_config_dir: str, splat_script: str, splat_option: str, ctx=None):
     print(config_name)
     shutil.copy(f"{config_dir}/{config_name}",
                 f"{config_config_dir}/config.txt")
@@ -225,9 +240,10 @@ async def _upload_iksm(config_name: str, config_dir: str, config_config_dir: str
         config_json = json.load(f)
     api_key = config_json["api_key"]
     if api_key in ["skip", ""]:  # API_KEY is not setted
+        print("    skipped because of Stat.ink API key")
         return
     cmd = " ".join(["python3", splat_script, splat_option])
-    await _asyncio_run(cmd)
+    await _asyncio_run(cmd, ctx)
     shutil.copy(f"{config_config_dir}/config.txt",
                 f"{config_dir}/{config_name}")
     return True
@@ -301,7 +317,11 @@ async def auto_upload_iksm(acc_name_key_in=None, fromLocal=False, ctx=None):
                             shutil.move(out_dirPath, done_dirPath)
                             break
                         splat_option_manual = f"-i \"{json_args_0}\" \"{json_args_1}\""
-                        success = await _upload_iksm(config_name, config_dir, GLOBAL_SPLAT_DIR3, f"{GLOBAL_SPLAT_DIR3}/s3s.py", splat_option_manual)
+                        success = await _upload_iksm(config_name, config_dir,
+                                                     GLOBAL_SPLAT_DIR3,
+                                                     f"{GLOBAL_SPLAT_DIR3}/s3s.py",
+                                                     splat_option_manual,
+                                                     ctx)
                         if fromLocal is True and success is True:
                             if os.path.isfile(done_dirPath):
                                 os.remove(done_dirPath)
