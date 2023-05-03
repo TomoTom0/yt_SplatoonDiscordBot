@@ -222,12 +222,13 @@ async def _asyncio_run(cmd: str, ctx=None):
         print(f"[stderr]\n{stderr.decode()}")
         content=f"Error occured:\n\n```bash\n# stderr\n{stderr.decode()}\n```"
         await _print_error(content, ctx)
+    sys.stdout.flush()
 
 async def _print_error(error_content: str, ctx=None):
     if isinstance(ctx, commands.Context):
         await ctx.channel.send(error_content)
     if callable(postWebhook_all):
-            await postWebhook_all(content=error_content)
+        await postWebhook_all(content=error_content)
     
 
 
@@ -243,6 +244,7 @@ async def _upload_iksm(config_name: str, config_dir: str, config_config_dir: str
         print("    skipped because of Stat.ink API key")
         return
     cmd = " ".join(["python3", splat_script, splat_option])
+    sys.stdout.flush()
     await _asyncio_run(cmd, ctx)
     shutil.copy(f"{config_config_dir}/config.txt",
                 f"{config_dir}/{config_name}")
@@ -272,7 +274,7 @@ async def auto_upload_iksm(acc_name_key_in=None, fromLocal=False, ctx=None):
         acc_name_sets = obtainAccNames()
         for acc_name_set in acc_name_sets:
             acc_name_key = acc_name_set.get("key", None)
-            if acc_name_key_in is not None and acc_name_key_in != acc_name_set.get("key", None):
+            if acc_name_key_in is not None and acc_name_key_in != acc_name_key:
                 continue
             config_name=acc_name_key+"_config.txt"
             print(f"\n{acc_name_key}\n")
@@ -317,6 +319,7 @@ async def auto_upload_iksm(acc_name_key_in=None, fromLocal=False, ctx=None):
                             shutil.move(out_dirPath, done_dirPath)
                             break
                         splat_option_manual = f"-i \"{json_args_0}\" \"{json_args_1}\""
+                        sys.stdout.flush()
                         success = await _upload_iksm(config_name, config_dir,
                                                      GLOBAL_SPLAT_DIR3,
                                                      f"{GLOBAL_SPLAT_DIR3}/s3s.py",
@@ -333,6 +336,7 @@ async def auto_upload_iksm(acc_name_key_in=None, fromLocal=False, ctx=None):
                 # default
                 for _try_count in range(3):
                     print(f"    try count: {_try_count}")
+                    sys.stdout.flush()
                     success = await _upload_iksm(config_name, config_dir, GLOBAL_SPLAT_DIR3, f"{GLOBAL_SPLAT_DIR3}/s3s.py", GLOBAL_SPLAT_OPTION3)
                     if GLOBAL_SPLAT_UPLOADISTRUE is False:
                         os.makedirs(out_dir, exist_ok=True)
@@ -344,9 +348,9 @@ async def auto_upload_iksm(acc_name_key_in=None, fromLocal=False, ctx=None):
                             shutil.move(dirName, out_dir)
                     break
             sys.stdout.flush()
-        if isinstance(ctx, commands.Context):
-            acc_name=acc_name_set["name"]
-            await ctx.channel.send(f"Uploading {acc_name}'s battle results has been finished.")
+        #if isinstance(ctx, commands.Context):
+        #    acc_name=acc_name_set["name"]
+        #    await ctx.channel.send(f"Uploading {acc_name}'s battle results has been finished.")
 
 
 def obtain_nextInterval(interval, start_time=None):

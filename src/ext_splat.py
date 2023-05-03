@@ -228,8 +228,8 @@ class Splat(commands.Cog):
         await ctx.send("stat.inkへのアップロードを開始します。")
         access_info = self.obtainAccessInfo(ctx)
         acc_name_set = await iksm_discord.checkAcc(ctx, acc_name, access_info=access_info)
-        await iksm_discord.auto_upload_iksm(acc_name_key_in=acc_name_set.get("key", None), fromLocal=False, ctx=ctx)
         await ctx.send("バックグラウンドで処理しています。詳細はログを確認してください。")
+        await iksm_discord.auto_upload_iksm(acc_name_key_in=acc_name_set.get("key", None), fromLocal=False, ctx=ctx)
 
     @commands.command(description="", pass_context=True)
     async def upIksmFromLocal(self, ctx: commands.Context, acc_name=""):
