@@ -102,7 +102,6 @@ def updateAccessInfo(acc_name_key_in, permission_info_in):
 def checkAccessInfo(acc_name_key_in="", access_info={}):
     if access_info.get("check", False) is False:
         return True
-
     acc_info = obtainAccInfo(acc_name_key=acc_name_key_in, access_info={})
     if acc_info is None:
         return False
@@ -126,12 +125,12 @@ def checkAccessInfo(acc_name_key_in="", access_info={}):
 
 
 def obtainConfigPaths(flag_path=True, access_info={}):
-    config_dir = GLOBAL_CONFIG_DIR3
+    config_dir3 = GLOBAL_CONFIG_DIR3
     if False and GLOBAL_ISHEROKU:
         pass
     else:
         config_paths = [
-            s if flag_path is True else os.path.basename(s) for s in glob2.glob(f"{config_dir}/*_config.txt")
+            s if flag_path is True else os.path.basename(s) for s in glob2.glob(f"{config_dir3}/*_config.txt")
             if checkAccessInfo(acc_name_key_in=os.path.basename(s).replace("_config.txt", ""), access_info=access_info)]
         return config_paths
 
@@ -151,14 +150,14 @@ def obtainAccNames(access_info={}):
 
 
 def obtainAccInfo(acc_name_key="", access_info={}):
-    config_dir = GLOBAL_CONFIG_DIR3
+    config_dir3 = GLOBAL_CONFIG_DIR3
     if False and GLOBAL_ISHEROKU:
         before_config_tmp = json.loads(os.getenv("iksm_configs", "{}"))
         before_config_jsons = eval(before_config_tmp) if isinstance(
             before_config_tmp, str) else before_config_tmp
         json_file = before_config_jsons[acc_name_key]
     else:
-        json_path = f"{config_dir}/{acc_name_key}_config.txt"
+        json_path = f"{config_dir3}/{acc_name_key}_config.txt"
         if json_path not in obtainConfigPaths(access_info=access_info):
             return None
         with open(json_path, "r") as f:
@@ -219,7 +218,7 @@ async def _asyncio_run(cmd: str):
 
 
 async def _upload_iksm(config_name: str, config_dir: str, config_config_dir: str, splat_script: str, splat_option: str):
-    # print(config_name)
+    print(config_name)
     shutil.copy(f"{config_dir}/{config_name}",
                 f"{config_config_dir}/config.txt")
     with open(f"{config_config_dir}/config.txt") as f:
@@ -234,9 +233,9 @@ async def _upload_iksm(config_name: str, config_dir: str, config_config_dir: str
     return True
 
 
-async def auto_upload_iksm(fromLocal=False, acc_name_key_in=None):
+async def auto_upload_iksm(acc_name_key_in=None, fromLocal=False, ctx=None):
     # auto upload
-    splat_path3 = GLOBAL_SPLAT_DIR3
+    splat_path = GLOBAL_SPLAT_DIR
     if False:  # GLOBAL_ISHEROKU is True:  # for Heroku
         before_config_tmp = json.loads(os.getenv("iksm_configs", "{}"))
         before_config_jsons = eval(before_config_tmp) if isinstance(
@@ -248,17 +247,18 @@ async def auto_upload_iksm(fromLocal=False, acc_name_key_in=None):
             with open(f"{GLOBAL_CONFIG_DIR}/config.txt", "w") as f:
                 json.dump(v, f)
             subprocess.run(
-                ["python3", f"{splat_path3}/splatnet2statink.py", "-r"])
+                ["python3", f"{splat_path}/splatnet2statink.py", "-r"])
             with open(f"{GLOBAL_CONFIG_DIR}/config.txt") as f:
                 v = json.load(f)
             before_config_jsons[acc_name] = v
     else:  # for not Heroku
-        config_dir3 = GLOBAL_CONFIG_DIR3
-        config_names = obtainConfigPaths(flag_path=False)
-        for config_name in config_names:
-            if acc_name_key_in is not None and acc_name_key_in != config_name:
+        config_dir = GLOBAL_CONFIG_DIR3
+        acc_name_sets = obtainAccNames()
+        for acc_name_set in acc_name_sets:
+            acc_name_key = acc_name_set.get("key", None)
+            if acc_name_key_in is not None and acc_name_key_in != acc_name_set.get("key", None):
                 continue
-            acc_name_key = config_name.replace("_config.txt", "")
+            config_name=acc_name_key+"_config.txt"
             print(f"\n{acc_name_key}\n")
 
             # for s2s
@@ -279,7 +279,7 @@ async def auto_upload_iksm(fromLocal=False, acc_name_key_in=None):
                 for dirName in glob2.glob(f"./export-*"):
                     shutil.move(dirName, out_root+"/escape")
 
-            # upload jsons to stat.ink
+            # upload jsons to stat.inkfromLocalcheckAcc
             if fromLocal is True:
                 out_dirPaths = glob2.glob(f"{out_dir}/export-*")
                 for out_dirPath in out_dirPaths:
@@ -301,10 +301,7 @@ async def auto_upload_iksm(fromLocal=False, acc_name_key_in=None):
                             shutil.move(out_dirPath, done_dirPath)
                             break
                         splat_option_manual = f"-i \"{json_args_0}\" \"{json_args_1}\""
-                        success = await _upload_iksm(config_name, config_dir3, 
-                                                     GLOBAL_SPLAT_DIR3, f"{GLOBAL_SPLAT_DIR3}/s3s.py",
-                                                     splat_option_manual)
-                        sys.stdout.flush()
+                        success = await _upload_iksm(config_name, config_dir, GLOBAL_SPLAT_DIR3, f"{GLOBAL_SPLAT_DIR3}/s3s.py", splat_option_manual)
                         if fromLocal is True and success is True:
                             if os.path.isfile(done_dirPath):
                                 os.remove(done_dirPath)
@@ -316,19 +313,20 @@ async def auto_upload_iksm(fromLocal=False, acc_name_key_in=None):
                 # default
                 for _try_count in range(3):
                     print(f"    try count: {_try_count}")
-                    success = await _upload_iksm(config_name, config_dir3,
-                                                 GLOBAL_SPLAT_DIR3, f"{GLOBAL_SPLAT_DIR3}/s3s.py", GLOBAL_SPLAT_OPTION3)
+                    success = await _upload_iksm(config_name, config_dir, GLOBAL_SPLAT_DIR3, f"{GLOBAL_SPLAT_DIR3}/s3s.py", GLOBAL_SPLAT_OPTION3)
                     if GLOBAL_SPLAT_UPLOADISTRUE is False:
                         os.makedirs(out_dir, exist_ok=True)
                         export_dirs = glob2.glob(f"./export-*")
                         # print(glob2.glob(f"./export-*"), glob2.glob(f"./{GLOBAL_SPLAT_DIR3}/export-*"))
-                        sys.stdout.flush()
                         if len(export_dirs) == 0:
                             continue
                         for dirName in export_dirs:
                             shutil.move(dirName, out_dir)
                     break
             sys.stdout.flush()
+        if isinstance(ctx, commands.Context):
+            acc_name=acc_name_set["name"]
+            await ctx.channel.send(f"Uploading {acc_name}'s battle results has been finished.")
 
 
 def obtain_nextInterval(interval, start_time=None):
@@ -381,9 +379,7 @@ class makeConfig():
         self.session = requests.Session()
         self.ctx = None
         self.isHeroku = GLOBAL_ISHEROKU
-        self.config_dir2 = GLOBAL_CONFIG_DIR
-        self.config_dir3 = GLOBAL_CONFIG_DIR3
-        self.config_dir = self.config_dir3
+        self.config_dir = GLOBAL_CONFIG_DIR3
 
     # ## obtain versions
     """def obtainGitHubContent(self, user: str, repo: str, path: str):
@@ -485,8 +481,7 @@ class makeConfig():
     # ## make config
     async def make_config_discord(self, API_KEY, ctx=None, print_session=False):
         self.ctx = ctx
-        config_dir3 = self.config_dir3
-        config_dir2 = self.config_dir2
+        config_dir = self.config_dir
         userLang = self.USER_LANG
         NSO_VERSION = self.versions["NSO"]
 
@@ -564,13 +559,12 @@ class makeConfig():
             config.update_env({"iksm_configs": json.dumps(json_configs)})
         else:  # for not Heroku
             # s3s
-            os.makedirs(config_dir3, exist_ok=True)
-            with open(f"{config_dir3}/{acc_name}_{time_10}_config.txt", "w") as f:
+            with open(f"{config_dir}/{acc_name}_{time_10}_config.txt", "w") as f:
                 f.write(json.dumps(config_data_s3s, indent=4,
                                    sort_keys=True, separators=(",", ": ")))
             # s2s
-            os.makedirs(config_dir2, exist_ok=True)
-            with open(f"{config_dir2}/{acc_name}_{time_10}_config.txt", "w") as f:
+            os.makedirs(config_dir, exist_ok=True)
+            with open(f"{config_dir}/{acc_name}_{time_10}_config.txt", "w") as f:
                 f.write(json.dumps(config_data, indent=4,
                                    sort_keys=True, separators=(",", ": ")))
 
