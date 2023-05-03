@@ -221,13 +221,13 @@ async def _asyncio_run(cmd: str, ctx=None):
     if stderr:
         print(f"[stderr]\n{stderr.decode()}")
         content=f"Error occured:\n\n```bash\n# stderr\n{stderr.decode()}\n```"
-        _print_error(content, ctx)
+        await _print_error(content, ctx)
 
 async def _print_error(error_content: str, ctx=None):
     if isinstance(ctx, commands.Context):
         await ctx.channel.send(error_content)
     if callable(postWebhook_all):
-            postWebhook_all(content=error_content)
+            await postWebhook_all(content=error_content)
     
 
 
