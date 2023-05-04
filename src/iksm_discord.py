@@ -37,9 +37,18 @@ GLOBAL_CONFIG_DIR3 = config.const_paths.get("config_dir3", None)
 GLOBAL_OUT_ROOT = config.const_paths.get("out_root", None)
 GLOBAL_DONE_ROOT = config.const_paths.get("done_root", None)
 GLOBAL_ISHEROKU = config.IsHeroku
-GLOBAL_SPLAT_OPTION3 = config.SPLAT_OPTION3
-GLOBAL_SPLAT_UPLOADISTRUE = config.SPLAT_UPLOAD_IS_TRUE
+#GLOBAL_SPLAT_OPTION3 = config.SPLAT_OPTION3
+#GLOBAL_SPLAT_UPLOADISTRUE = config.SPLAT_UPLOAD_IS_TRUE
 GLOBAL_ACCESS_JSON_PATH = config.const_paths.get("access_json_path", None)
+
+def obtainBoolEnv(key="SPLATOON_DISCORD_BOT_UPLOAD", default=True):
+    return bool(os.environ.get(key, default))
+def obtainSplatOption3(splat_upload_is_true=None):
+    if splat_upload_is_true is None:
+        splat_upload_is_true = obtainBoolEnv()
+    _splatOption3_dict = {True: "-r", False: "-o"}
+    return _splatOption3_dict[splat_upload_is_true]
+
 
 #GLOBAL_BOT_MODE = config.BOT_MODE
 try:
@@ -254,6 +263,8 @@ async def _upload_iksm(config_name: str, config_dir: str, config_config_dir: str
 async def auto_upload_iksm(acc_name_key_in=None, fromLocal=False, ctx=None):
     # auto upload
     splat_path = GLOBAL_SPLAT_DIR
+    if obtainBoolEnv("SPLATOON_DISCORD_BOT_AUTO_S3S", True) is False:
+        print("Auto S3S is skipped because SPLATOON_DISCORD_BOT_AUTO_S3S is False")
     if False:  # GLOBAL_ISHEROKU is True:  # for Heroku
         before_config_tmp = json.loads(os.getenv("iksm_configs", "{}"))
         before_config_jsons = eval(before_config_tmp) if isinstance(
@@ -286,7 +297,7 @@ async def auto_upload_iksm(acc_name_key_in=None, fromLocal=False, ctx=None):
             # if GLOBAL_ISHEROKU is True:
             #    continue
 
-            if GLOBAL_SPLAT_UPLOADISTRUE is False or fromLocal is True:
+            if obtainBoolEnv() is False or fromLocal is True:
 
                 out_root = GLOBAL_OUT_ROOT
                 done_root = GLOBAL_DONE_ROOT
@@ -337,8 +348,13 @@ async def auto_upload_iksm(acc_name_key_in=None, fromLocal=False, ctx=None):
                 for _try_count in range(3):
                     print(f"    try count: {_try_count}")
                     sys.stdout.flush()
-                    success = await _upload_iksm(config_name, config_dir, GLOBAL_SPLAT_DIR3, f"{GLOBAL_SPLAT_DIR3}/s3s.py", GLOBAL_SPLAT_OPTION3)
-                    if GLOBAL_SPLAT_UPLOADISTRUE is False:
+                    success = await _upload_iksm(
+                        config_name,
+                        config_dir,
+                        GLOBAL_SPLAT_DIR3,
+                        f"{GLOBAL_SPLAT_DIR3}/s3s.py",
+                        obtainSplatOption3())
+                    if obtainBoolEnv() is False:
                         os.makedirs(out_dir, exist_ok=True)
                         export_dirs = glob2.glob(f"./export-*")
                         # print(glob2.glob(f"./export-*"), glob2.glob(f"./{GLOBAL_SPLAT_DIR3}/export-*"))

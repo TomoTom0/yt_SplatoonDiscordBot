@@ -239,6 +239,19 @@ class Splat(commands.Cog):
         acc_name_set = await iksm_discord.checkAcc(ctx, acc_name, access_info=access_info)
         await iksm_discord.auto_upload_iksm(acc_name_key_in=acc_name_set.get("key", None), fromLocal=True, ctx=ctx)
         await ctx.send("バックグラウンドで処理しています。詳細はログを確認してください。")
+    
+    @commands.command(description="", pass_context=True)
+    async def toggleIksm(self, ctx: commands.Context, acc_name=""):
+        """S3S (Stat.inkへの戦績アプロード) の定期実行の有効無効を切り替えます。"""
+        auto_s3s_key="SPLATOON_DISCORD_BOT_AUTO_S3S"
+        auto_s3s_is_valid = iksm_discord.obtainBoolEnv(auto_s3s_key, True)
+        auto_s3s_is_valid_Jap={True:"有効", False:"無効"}[not auto_s3s_is_valid]
+        os.environ[auto_s3s_key]=str(not auto_s3s_is_valid)
+
+        msg_content = "S3S (Stat.inkへの戦績アプロード) の定期実行を\n"+\
+                f"    **{auto_s3s_is_valid_Jap}**\n"+\
+                "に切り替えます。"
+        await ctx.channel.send(msg_content)
 
 
 async def setup(bot):
