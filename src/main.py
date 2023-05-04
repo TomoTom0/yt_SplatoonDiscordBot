@@ -15,8 +15,6 @@ import config
 async def _empty_func(**kwargs):
     return
 
-IS_HEROKU=config.isHeroku
-
 async def main():
     DISCORD_TOKEN = config.DISCORD_TOKEN
     BOT_MODE = config.BOT_MODE
@@ -30,9 +28,6 @@ async def main():
     bot = commands.Bot(command_prefix=COMMAND_PREFIX,
                        description=description, intents=intents)
 
-    """
-    ctxのinstance: 実質global
-    """
     commands.Context.extensions_dict = extensions_dict
     commands.Context.extensions = extensions_dict.get("default", [])
 
