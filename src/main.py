@@ -2,7 +2,7 @@
 import discord
 from discord.ext import commands, tasks
 
-# import os
+import os
 import sys
 import asyncio
 import datetime
@@ -15,6 +15,7 @@ import config
 async def _empty_func(**kwargs):
     return
 
+IS_HEROKU=config.isHeroku
 
 async def main():
     DISCORD_TOKEN = config.DISCORD_TOKEN

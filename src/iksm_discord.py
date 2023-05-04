@@ -446,7 +446,7 @@ def write_config(config_data_s2s=None, config_data_s3s=None, acc_name=None, time
             config.update_env({"iksm_configs": json.dumps(json_configs)})
     return decomposeKey(f"{acc_name}_{time_10}")
 
-class makeConfig():
+class MakeConfig():
     def __init__(self):
         self.versions_saved = GLOBAL_VERSIONS_DEFAULT
         self.versions = self.obtainVersions()

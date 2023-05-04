@@ -142,7 +142,7 @@ class Splat(commands.Cog):
                 acc_name_set = iksm_discord.write_config(config_data_s3s=config_json, acc_name=acc_name, isHeroku=False)
             else:
                 # print(STAT_INK_API_KEY)
-                makeConfig = iksm_discord.makeConfig()
+                makeConfig = iksm_discord.MakeConfig()
                 acc_name_set = await makeConfig.make_config_discord(STAT_INK_API_KEY, ctx)
                 acc_name = acc_name_set["name"]
             if acc_name_set is None:
