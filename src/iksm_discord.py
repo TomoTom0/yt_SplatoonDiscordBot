@@ -225,13 +225,19 @@ async def _asyncio_run(cmd: str, ctx=None):
     stdout, stderr = await proc.communicate()
 
     print(f"[{cmd!r} exited with {proc.returncode}]")
+    text_content=f"```bash\n[stdout]\n{stdout.decode()}\n\n[stderr]\n{stderr.decode()}\n```"
+
     if stdout:
         print(f"[stdout]\n{stdout.decode()}")
     if stderr:
         print(f"[stderr]\n{stderr.decode()}")
-        content=f"Error occured:\n\n```bash\n# stderr\n{stderr.decode()}\n```"
-        await _print_error(content, ctx)
+    if proc.returncode !=0 and isinstance(ctx, commands.Context):        
+        await ctx.channel.send(text_content)
+
+        #content=f"Error occured:\n\n```bash\n# stderr\n{stderr.decode()}\n```"
+        #await _print_error(content, ctx)
     sys.stdout.flush()
+    return proc.returncode, stdout, stderr
 
 async def _print_error(error_content: str, ctx=None):
     if isinstance(ctx, commands.Context):
@@ -250,11 +256,12 @@ async def _upload_iksm(config_name: str, config_dir: str, config_config_dir: str
         config_json = json.load(f)
     api_key = config_json["api_key"]
     if api_key in ["skip", ""]:  # API_KEY is not setted
-        print("    skipped because of Stat.ink API key")
+        print("    skipped because Stat.ink API key is invalid")
         return
     cmd = " ".join(["python3", splat_script, splat_option])
     sys.stdout.flush()
     await _asyncio_run(cmd, ctx)
+    
     shutil.copy(f"{config_config_dir}/config.txt",
                 f"{config_dir}/{config_name}")
     return True
@@ -331,7 +338,8 @@ async def auto_upload_iksm(acc_name_key_in=None, fromLocal=False, ctx=None):
                             break
                         splat_option_manual = f"-i \"{json_args_0}\" \"{json_args_1}\""
                         sys.stdout.flush()
-                        success = await _upload_iksm(config_name, config_dir,
+                        success = await _upload_iksm(config_name, 
+                                                     config_dir,
                                                      GLOBAL_SPLAT_DIR3,
                                                      f"{GLOBAL_SPLAT_DIR3}/s3s.py",
                                                      splat_option_manual,
@@ -353,7 +361,8 @@ async def auto_upload_iksm(acc_name_key_in=None, fromLocal=False, ctx=None):
                         config_dir,
                         GLOBAL_SPLAT_DIR3,
                         f"{GLOBAL_SPLAT_DIR3}/s3s.py",
-                        obtainSplatOption3())
+                        obtainSplatOption3(),
+                        ctx)
                     if obtainBoolEnv() is False:
                         os.makedirs(out_dir, exist_ok=True)
                         export_dirs = glob2.glob(f"./export-*")
@@ -410,6 +419,32 @@ async def __autoUploadCycle_old(next_time=7200):
 
 # # ------------/ class /---------------
 
+def write_config(config_data_s2s=None, config_data_s3s=None, acc_name=None, time_10=None, isHeroku=False):
+    time_10 = time_10 if re.findall(r"\d+", str(time_10))!=[] else format(int(time.time()), "010")
+    if isHeroku is False:
+        if config_data_s3s is not None:
+            # s3s
+            with open(f"{GLOBAL_CONFIG_DIR3}/{acc_name}_{time_10}_config.txt", "w") as f:
+                f.write(json.dumps(config_data_s3s, indent=4,
+                            sort_keys=True, separators=(",", ": ")))
+        if config_data_s2s is not None:
+            # s3s
+            with open(f"{GLOBAL_CONFIG_DIR}/{acc_name}_{time_10}_config.txt", "w") as f:
+                f.write(json.dumps(config_data_s3s, indent=4,
+                            sort_keys=True, separators=(",", ": ")))
+    else:
+        before_config_tmp = json.loads(os.getenv("iksm_configs", "{}"))
+        before_config_jsons = eval(before_config_tmp) if isinstance(
+            before_config_tmp, str) else before_config_tmp
+        if config_data_s3s is not None:
+            new_config = {f"{acc_name}_{time_10}": config_data_s3s}
+            if isinstance(before_config_jsons, dict):
+                before_config_jsons.update(new_config)
+            else:
+                before_config_jsons = new_config
+            json_configs = json.dumps(before_config_jsons)
+            config.update_env({"iksm_configs": json.dumps(json_configs)})
+    return decomposeKey(f"{acc_name}_{time_10}")
 
 class makeConfig():
     def __init__(self):
@@ -574,7 +609,7 @@ class makeConfig():
         acc_name = self.nickname
         new_cookie = self.iksm_session
 
-        config_data = {"api_key": API_KEY, "cookie": new_cookie,
+        config_data_s2s = {"api_key": API_KEY, "cookie": new_cookie,
                        "user_lang": userLang, "session_token": new_token}
         config_data_s3s = {"api_key": API_KEY, "cookie": new_cookie,
                            "acc_loc": f"{userLang}|{userLang[-2:]}",
@@ -584,29 +619,10 @@ class makeConfig():
 
         #print(config_data, config_data_s3s)
 
+
         # save config
         time_10 = format(int(time.time()), "010")
-        if self.isHeroku is True:  # for Heroku
-            before_config_tmp = json.loads(os.getenv("iksm_configs", "{}"))
-            before_config_jsons = eval(before_config_tmp) if isinstance(
-                before_config_tmp, str) else before_config_tmp
-            new_config = {f"{acc_name}_{time_10}": config_data}
-            if isinstance(before_config_jsons, dict):
-                before_config_jsons.update(new_config)
-            else:
-                before_config_jsons = new_config
-            json_configs = json.dumps(before_config_jsons)
-            config.update_env({"iksm_configs": json.dumps(json_configs)})
-        else:  # for not Heroku
-            # s3s
-            with open(f"{config_dir}/{acc_name}_{time_10}_config.txt", "w") as f:
-                f.write(json.dumps(config_data_s3s, indent=4,
-                                   sort_keys=True, separators=(",", ": ")))
-            # s2s
-            os.makedirs(config_dir, exist_ok=True)
-            with open(f"{config_dir}/{acc_name}_{time_10}_config.txt", "w") as f:
-                f.write(json.dumps(config_data, indent=4,
-                                   sort_keys=True, separators=(",", ": ")))
+        write_config(config_data_s2s=config_data_s2s, config_data_s3s=config_data_s3s, acc_name=acc_name, time_10=time_10)
 
         return decomposeKey(f"{acc_name}_{time_10}")
 

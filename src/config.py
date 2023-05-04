@@ -65,12 +65,15 @@ DM_IS_REQUIRED = "DM" in python_args
 
 # main
 BOT_MODE = "test" if "test" in python_args else "main"
+if BOT_MODE == "test":
+    os.environ["SPLATOON_DISCORD_BOT_AUTO_S3S"] = "False"
 DISCORD_TOKEN = DISCORD_TOKENS[BOT_MODE]
 extensions_dict = {  # cogの導入
     "default": ["ext_splat"]
 }
 
-description = f"stat.inkへ戦績自動アップロードを行うbotです。\nまずはstat.inkのAPI KEYを用意してください。\n" +\
+description = "stat.inkへ戦績自動アップロードを行うbotです。\n"+\
+    "まずはstat.inkのAPI KEYを用意してください。\n" +\
     "詳しい使い方はこちら -> https://github.com/TomoTom0/yt_SplatoonDiscordBot"
 
 # --------- webhook -----------
