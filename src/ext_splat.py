@@ -81,8 +81,10 @@ class Splat(commands.Cog):
         
         # 各種API KEYの入力確認
         # 例外としてskipはOK。skipの場合、戦績のuploadはされません。
+        config_json = None
         if len(STAT_INK_API_KEY) != 43 and STAT_INK_API_KEY != "skip":
             content = "stat.inkの有効なAPI KEY(43文字)を入力してください。\n" +\
+                "すでにs3sで生成したconfig.jsonが存在する場合は、その内容をコピペすることも可能です。\n"+\
                 "stat.inkと連携する必要がない場合は`skip`\n" +\
                 "コマンドを終了したい場合は`stop`と入力してください。"
             await ctx.send(content)
@@ -90,28 +92,59 @@ class Splat(commands.Cog):
             def check_msg(msg):
                 authorIsValid = (msg.author.id == ctx.message.author.id)
                 contentIsCommand = msg.content in ["stop", "skip"]
+                try:
+                    contentIsJson = True
+                    json.loads(msg.content)
+                except Exception as e:
+                    contentIsJson = False
                 contentIsValidLength = (len(STAT_INK_API_KEY) == 43)
-                contentIsValid = contentIsCommand or contentIsValidLength
+                contentIsValid = contentIsCommand or contentIsValidLength or contentIsJson
                 return authorIsValid and contentIsValid
             try:
                 input_msg = await ctx.bot.wait_for("message", check=check_msg, timeout=600)
                 msg_content = input_msg.content
-                if msg_content == "stop":
-                    await ctx.channel.send("The command has been canceled.")
-                    return
-                else:
-                    STAT_INK_API_KEY = msg_content
             except asyncio.TimeoutError:
                 await ctx.channel.send("The command has been timeout, and please retry.")
                 return
+            input_content = msg_content
+            if input_content == "stop":
+                await ctx.channel.send("The command has been canceled.")
+                return
+            elif len(input_content)==43 or input_content in ["skip"]:
+                STAT_INK_API_KEY = input_content
+            else:
+                try:
+                    tmp_json = json.loads(input_content)
+                    config_json=tmp_json
+                except Exception:
+                    config_json=None                    
+                    STAT_INK_API_KEY = input_content
         if config.IsHeroku and not os.getenv("HEROKU_APIKEY", False):
             await ctx.channel.send("Herokuの環境変数としてHerokuのAPI KEYが入力されていません。\nコマンドを終了します。")
             return
-        # try:
         try:
-            # print(STAT_INK_API_KEY)
-            makeConfig = iksm_discord.makeConfig()
-            acc_name_set = await makeConfig.make_config_discord(STAT_INK_API_KEY, ctx)
+            if config_json is not None:
+                def check_msg_accName(msg):
+                    authorIsValid = (msg.author.id == ctx.message.author.id)
+                    contentIsValid = len(msg.content)>0
+                    return authorIsValid and contentIsValid
+                try:
+                    text_content="config.txtの内容が読み込まれました。\n"+\
+                        "**登録するアカウント名**を入力してください。\n"+\
+                        "Nintendoアカウントの名前と一致している必要はありません。"
+                    await ctx.channel.send(text_content)
+                    input_msg = await ctx.bot.wait_for("message", check=check_msg_accName, timeout=600)
+                    msg_content = input_msg.content
+                except asyncio.TimeoutError:
+                    await ctx.channel.send("The command has been timeout, and please retry.")
+                    return
+                acc_name = msg_content
+                acc_name_set = iksm_discord.write_config(config_data_s3s=config_json, acc_name=acc_name, isHeroku=False)
+            else:
+                # print(STAT_INK_API_KEY)
+                makeConfig = iksm_discord.MakeConfig()
+                acc_name_set = await makeConfig.make_config_discord(STAT_INK_API_KEY, ctx)
+                acc_name = acc_name_set["name"]
             if acc_name_set is None:
                 await ctx.send("エラーが発生しました。詳細はbotのログを確認してください。")
                 return
@@ -122,7 +155,6 @@ class Splat(commands.Cog):
             return
         # convert config from s2s to s3s
 
-        acc_name = acc_name_set["name"]
         success_message = "新たに次のアカウントが登録されました。\n" +\
             f"\t\t`{acc_name}`\n" +\
             ("\nこの後botは再起動されます。次の操作はしばらくお待ちください。" if config.IsHeroku else "")
@@ -228,8 +260,8 @@ class Splat(commands.Cog):
         await ctx.send("stat.inkへのアップロードを開始します。")
         access_info = self.obtainAccessInfo(ctx)
         acc_name_set = await iksm_discord.checkAcc(ctx, acc_name, access_info=access_info)
-        await iksm_discord.auto_upload_iksm(fromLocal=False, acc_name_key_in=acc_name_set.get("key", None))
         await ctx.send("バックグラウンドで処理しています。詳細はログを確認してください。")
+        await iksm_discord.auto_upload_iksm(acc_name_key_in=acc_name_set.get("key", None), fromLocal=False, ctx=ctx)
 
     @commands.command(description="", pass_context=True)
     async def upIksmFromLocal(self, ctx: commands.Context, acc_name=""):
@@ -237,8 +269,42 @@ class Splat(commands.Cog):
         await ctx.send("stat.inkへ戦績jsonファイルのアップロードを開始します。")
         access_info = self.obtainAccessInfo(ctx)
         acc_name_set = await iksm_discord.checkAcc(ctx, acc_name, access_info=access_info)
-        await iksm_discord.auto_upload_iksm(fromLocal=True, acc_name_key_in=acc_name_set.get("key", None))
+        await iksm_discord.auto_upload_iksm(acc_name_key_in=acc_name_set.get("key", None), fromLocal=True, ctx=ctx)
         await ctx.send("バックグラウンドで処理しています。詳細はログを確認してください。")
+    
+    @commands.command(description="", pass_context=True)
+    async def toggleIksm(self, ctx: commands.Context):
+        """S3S (Stat.inkへの戦績アプロード) の定期実行の有効無効を切り替えます。"""
+        auto_s3s_key="SPLATOON_DISCORD_BOT_AUTO_S3S"
+        auto_s3s_is_valid = iksm_discord.obtainBoolEnv(auto_s3s_key, True)
+        auto_s3s_is_valid_Jap={True:"有効", False:"無効"}[not auto_s3s_is_valid]
+        os.environ[auto_s3s_key]=str(not auto_s3s_is_valid)
+
+        msg_content = "S3S (Stat.inkへの戦績アプロード) の定期実行を\n"+\
+                f"    **{auto_s3s_is_valid_Jap}**\n"+\
+                "に切り替えます。"
+        await ctx.channel.send(msg_content)
+                
+    @commands.command(description="", pass_context=True)
+    async def exportIksm(self, ctx: commands.Context, acc_name=""):
+        """指定されたアカウントのconfig.jsonの内容を出力します。"""
+        access_info = self.obtainAccessInfo(ctx)
+        if acc_name == "":
+            acc_name_set = await self.waitInputAcc(ctx, access_info=access_info)
+            if acc_name_set is None:
+                return
+            acc_name = acc_name_set["name"]
+        else:
+            acc_name_set = await iksm_discord.checkAcc(ctx, acc_name, access_info=access_info)
+            if acc_name_set["name"] == "":
+                return
+        acc_info = iksm_discord.obtainAccInfo(
+            acc_name_set["key"], access_info=access_info)
+        if acc_info is None:
+            await ctx.channel.send(f"`{acc_name}` is not regitered or cannot be seen")
+        await ctx.channel.send(f"`This is the content of {acc_name}'s config.txt:\n")
+        await ctx.channel.send(f"```json\n{json.dumps(acc_info, indent=2)}\n```")
+
 
 
 async def setup(bot):

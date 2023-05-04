@@ -2,7 +2,7 @@
 import discord
 from discord.ext import commands, tasks
 
-# import os
+import os
 import sys
 import asyncio
 import datetime
@@ -14,7 +14,6 @@ import config
 
 async def _empty_func(**kwargs):
     return
-
 
 async def main():
     DISCORD_TOKEN = config.DISCORD_TOKEN
@@ -29,9 +28,6 @@ async def main():
     bot = commands.Bot(command_prefix=COMMAND_PREFIX,
                        description=description, intents=intents)
 
-    """
-    ctxのinstance: 実質global
-    """
     commands.Context.extensions_dict = extensions_dict
     commands.Context.extensions = extensions_dict.get("default", [])
 
