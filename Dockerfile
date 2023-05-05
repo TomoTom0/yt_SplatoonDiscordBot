@@ -1,6 +1,7 @@
 FROM python:3.8
 
 WORKDIR /app
+COPY requirements.txt app/
 RUN pip install -r requirements.txt
 RUN git clone https://github.com/frozenpandaman/s3s.git
 RUN pip install -r s3s/requirements.txt
