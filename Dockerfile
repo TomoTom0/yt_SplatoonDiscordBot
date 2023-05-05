@@ -1,6 +1,8 @@
 FROM python:3.8
 WORKDIR /app
-RUN apt update && apt upgrade -y && apt install -y git && \
+RUN sudo apt update && \
+    sudo apt upgrade -y && \
+    sudo apt install -y git && \
     git clone https://github.com/frozenpandaman/s3s.git && \
     pip install -r requirements.txt && \
     pip install -r s3s/requirements.txt
