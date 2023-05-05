@@ -19,6 +19,7 @@ import asyncio
 import glob2
 from distutils.version import StrictVersion
 from bs4 import BeautifulSoup
+from functions import obtainBoolEnv, obtainSplatOption3, postWebhook_all, asyncio_run
 
 import config
 GLOBAL_VERSIONS_DEFAULT = {
@@ -37,24 +38,7 @@ GLOBAL_CONFIG_DIR3 = config.const_paths.get("config_dir3", None)
 GLOBAL_OUT_ROOT = config.const_paths.get("out_root", None)
 GLOBAL_DONE_ROOT = config.const_paths.get("done_root", None)
 GLOBAL_ISHEROKU = config.IsHeroku
-#GLOBAL_SPLAT_OPTION3 = config.SPLAT_OPTION3
-#GLOBAL_SPLAT_UPLOADISTRUE = config.SPLAT_UPLOAD_IS_TRUE
 GLOBAL_ACCESS_JSON_PATH = config.const_paths.get("access_json_path", None)
-
-def obtainBoolEnv(key="SPLATOON_DISCORD_BOT_UPLOAD", default=True):
-    return bool(os.environ.get(key, default))
-def obtainSplatOption3(splat_upload_is_true=None):
-    if splat_upload_is_true is None:
-        splat_upload_is_true = obtainBoolEnv()
-    _splatOption3_dict = {True: "-r", False: "-o"}
-    return _splatOption3_dict[splat_upload_is_true]
-
-
-#GLOBAL_BOT_MODE = config.BOT_MODE
-try:
-    postWebhook_all = config.postWebhook_all
-except Exception as e:
-    postWebhook_all = None
 
 GLOBAL_SPLATNET3_URL = "https://api.lp1.av5ja.srv.nintendo.net"
 GLOBAL_GRAPHQL_URL = "https://api.lp1.av5ja.srv.nintendo.net/api/graphql"
@@ -215,38 +199,6 @@ async def checkAcc(ctx: commands.Context, acc_name: str, access_info={}):
         return {"name": ""}
 
 # ## upload functions
-
-async def asyncio_run(cmd: str, ctx=None, flag_alwaysSend=False):
-    proc = await asyncio.create_subprocess_shell(
-        cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE)
-
-    stdout, stderr = await proc.communicate()
-
-    print(f"[{cmd!r} exited with {proc.returncode}]")
-    text_content=f"```bash\n[stdout]\n{stdout.decode()}\n\n[stderr]\n{stderr.decode()}\n```"
-
-    if stdout:
-        print(f"[stdout]\n{stdout.decode()}")
-    if stderr:
-        print(f"[stderr]\n{stderr.decode()}")
-    if (flag_alwaysSend is True or proc.returncode !=0) and isinstance(ctx, commands.Context):        
-        await ctx.channel.send(text_content)
-
-        #content=f"Error occured:\n\n```bash\n# stderr\n{stderr.decode()}\n```"
-        #await _print_error(content, ctx)
-    sys.stdout.flush()
-    return proc.returncode, stdout, stderr
-
-async def _print_error(error_content: str, ctx=None):
-    if isinstance(ctx, commands.Context):
-        await ctx.channel.send(error_content)
-    if callable(postWebhook_all):
-        await postWebhook_all(content=error_content)
-    
-
-
 
 async def _upload_iksm(config_name: str, config_dir: str, config_config_dir: str, splat_script: str, splat_option: str, ctx=None):
     print(config_name)

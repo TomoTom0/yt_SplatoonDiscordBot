@@ -8,6 +8,8 @@ import sys
 import iksm_discord
 import traceback
 import asyncio
+from functions import asyncio_run
+import glob2
 
 # from discord_slash import cog_ext, SlashContext
 
@@ -168,27 +170,6 @@ class Splat(commands.Cog):
         iksm_discord.updateAccessInfo(
             acc_name_key_in=acc_name_set["key"], permission_info_in=permission_info)
 
-    # ## check
-    @commands.command(description="", pass_context=True)
-    async def checkIksm(self, ctx: commands.Context, acc_name=""):
-        """指定されたアカウントのiksm_sessionを表示します。"""
-        access_info = self.obtainAccessInfo(ctx)
-        if acc_name == "":
-            acc_name_set = await self.waitInputAcc(ctx, access_info=access_info)
-            if acc_name_set is None:
-                return
-            acc_name = acc_name_set["name"]
-        else:
-            acc_name_set = await iksm_discord.checkAcc(ctx, acc_name, access_info=access_info)
-            if acc_name_set["name"] == "":
-                return
-        acc_info = iksm_discord.obtainAccInfo(
-            acc_name_set["key"], access_info=access_info)
-        if acc_info is None:
-            await ctx.channel.send(f"`{acc_name}` is not regitered or cannot be seen")
-        await ctx.channel.send(f"`{acc_name}`'s iksm_session is following:\n")
-        await ctx.channel.send(acc_info["session_token"])
-
     # ## rm
     @commands.command(description="", pass_context=True)
     async def rmIksm(self, ctx: commands.Context, acc_name=""):
@@ -212,7 +193,6 @@ class Splat(commands.Cog):
                     except Exception as e:
                         print(f"{e}: {e.args}")
                         
-
         # check
         access_info = self.obtainAccessInfo(ctx)
         if acc_name == "":
@@ -264,15 +244,6 @@ class Splat(commands.Cog):
         await iksm_discord.auto_upload_iksm(acc_name_key_in=acc_name_set.get("key", None), fromLocal=False, ctx=ctx)
 
     @commands.command(description="", pass_context=True)
-    async def upIksmFromLocal(self, ctx: commands.Context, acc_name=""):
-        """Localに保存されていた戦績のjsonファイルをstat.inkへアップロードします。"""
-        await ctx.send("stat.inkへ戦績jsonファイルのアップロードを開始します。")
-        access_info = self.obtainAccessInfo(ctx)
-        acc_name_set = await iksm_discord.checkAcc(ctx, acc_name, access_info=access_info)
-        await iksm_discord.auto_upload_iksm(acc_name_key_in=acc_name_set.get("key", None), fromLocal=True, ctx=ctx)
-        await ctx.send("バックグラウンドで処理しています。詳細はログを確認してください。")
-    
-    @commands.command(description="", pass_context=True)
     async def toggleIksm(self, ctx: commands.Context):
         """S3S (Stat.inkへの戦績アプロード) の定期実行の有効無効を切り替えます。"""
         auto_s3s_key="SPLATOON_DISCORD_BOT_AUTO_S3S"
@@ -304,8 +275,57 @@ class Splat(commands.Cog):
             await ctx.channel.send(f"`{acc_name}` is not regitered or cannot be seen")
         await ctx.channel.send(f"`This is the content of {acc_name}'s config.txt:\n")
         await ctx.channel.send(f"```json\n{json.dumps(acc_info, indent=2)}\n```")
+    
+    @commands.command(description="", pass_context=True)
+    async def gitPull(self, ctx: commands.Context, repo_name=""):
+        """指定されたRepositoryの内容をgit pullで更新します。"""
+        repo_paths_input=glob2.glob(f"**/{repo_name}/.git")
+        if len(repo_name)==0 or len(repo_paths_input)==0:
+            repo_paths_tmp=glob2.glob("**/.git")
+            if len(repo_paths_tmp)==0:
+                await ctx.channel.send("有効なRepositoryのディレクトリが存在しません。")
+                return
+        
+        access_info = self.obtainAccessInfo(ctx)
+        
+    
+class SubSplat(commands.Cog):
+    "Splatoonに関する補助的なコマンド"
 
+    def __init__(self, bot):
+        self.bot = bot
 
+    # ## check
+    @commands.command(description="", pass_context=True)
+    async def checkIksm(self, ctx: commands.Context, acc_name=""):
+        """指定されたアカウントのiksm_sessionを表示します。"""
+        access_info = self.obtainAccessInfo(ctx)
+        if acc_name == "":
+            acc_name_set = await self.waitInputAcc(ctx, access_info=access_info)
+            if acc_name_set is None:
+                return
+            acc_name = acc_name_set["name"]
+        else:
+            acc_name_set = await iksm_discord.checkAcc(ctx, acc_name, access_info=access_info)
+            if acc_name_set["name"] == "":
+                return
+        acc_info = iksm_discord.obtainAccInfo(
+            acc_name_set["key"], access_info=access_info)
+        if acc_info is None:
+            await ctx.channel.send(f"`{acc_name}` is not regitered or cannot be seen")
+        await ctx.channel.send(f"`{acc_name}`'s iksm_session is following:\n")
+        await ctx.channel.send(acc_info["session_token"])
+
+    @commands.command(description="", pass_context=True)
+    async def upIksmFromLocal(self, ctx: commands.Context, acc_name=""):
+        """Localに保存されていた戦績のjsonファイルをstat.inkへアップロードします。"""
+        await ctx.send("stat.inkへ戦績jsonファイルのアップロードを開始します。")
+        access_info = self.obtainAccessInfo(ctx)
+        acc_name_set = await iksm_discord.checkAcc(ctx, acc_name, access_info=access_info)
+        await iksm_discord.auto_upload_iksm(acc_name_key_in=acc_name_set.get("key", None), fromLocal=True, ctx=ctx)
+        await ctx.send("バックグラウンドで処理しています。詳細はログを確認してください。")
+    
 
 async def setup(bot):
     await bot.add_cog(Splat(bot))
+    await bot.add_cog(SubSplat(bot))

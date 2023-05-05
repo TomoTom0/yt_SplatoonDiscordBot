@@ -4,7 +4,7 @@ from discord.ext import commands
 import random
 import os
 import re
-from iksm_discord import asyncio_run
+from functions import asyncio_run
 import config
 
 class Tool(commands.Cog):

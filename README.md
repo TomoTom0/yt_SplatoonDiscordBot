@@ -19,6 +19,13 @@ s3sを用いてstat.inkへ戦績のアップロードを行います。(option�
 NASやGCPなどでの使用を想定しています。
 Herokuの無料枠はなくなってしまったそうです。
 
+## Railway
+
+RailwayでDiscord Botを無料で運用することができる (試験中)。
+下記ボタンからDeployできる。
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/UpV4FI?referralCode=VzCJ_k)
+
 ### 環境変数(Environmental Variables)
 
 |環境変数|既定値|説明|
