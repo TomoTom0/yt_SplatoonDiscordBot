@@ -1,4 +1,4 @@
-FROM node:alpine
+FROM node:19
 
 WORKDIR /app
 RUN apt-get update
