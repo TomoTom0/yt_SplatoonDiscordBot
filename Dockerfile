@@ -1,4 +1,4 @@
-FROM npm:19
+FROM npm:19.9.0
 
 WORKDIR /app
 RUN sudo apt update && \
