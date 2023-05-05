@@ -1,12 +1,10 @@
 FROM node:alpine
 
 WORKDIR /app
-RUN sudo apt update && \
-    sudo apt upgrade -y && \
-    sudo apt install -y python3.8 \
-        python3-pip \
-        git && \
-    sudo npm install -g @railway/cli
+RUN sudo apt update
+RUN sudo apt upgrade -y
+RUN sudo apt install -y python3.8 python3-pip
+RUN sudo npm install -g @railway/cli
 COPY requirements.txt /app/
 RUN pip install -r /app/requirements.txt
 RUN git clone https://github.com/frozenpandaman/s3s.git
