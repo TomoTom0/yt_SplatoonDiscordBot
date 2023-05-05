@@ -1,4 +1,4 @@
-FROM npm:19.9.0
+FROM node:alpine
 
 WORKDIR /app
 RUN sudo apt update && \
