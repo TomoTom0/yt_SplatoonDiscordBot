@@ -1,10 +1,10 @@
 FROM python:3.8
 
 WORKDIR /app
-COPY requirements.txt app/
-RUN pip install -r requirements.txt
+COPY requirements.txt /app/
+RUN pip install -r /app/requirements.txt
 RUN git clone https://github.com/frozenpandaman/s3s.git
-RUN pip install -r s3s/requirements.txt
+RUN pip install -r /app/s3s/requirements.txt
 COPY . /app
 
 ENV SPLATOON_DISCORD_BOT_NOTICED_CHANNELS_MAIN ""
