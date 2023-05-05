@@ -1,9 +1,9 @@
 FROM node:alpine
 
 WORKDIR /app
-RUN apt update
-RUN apt upgrade -y
-RUN apt install -y python3.8 python3-pip
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y python3.8 python3-pip
 RUN npm install -g @railway/cli
 COPY requirements.txt /app/
 RUN pip install -r /app/requirements.txt
