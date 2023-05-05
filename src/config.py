@@ -69,7 +69,8 @@ if BOT_MODE == "test":
     os.environ["SPLATOON_DISCORD_BOT_AUTO_S3S"] = "False"
 DISCORD_TOKEN = DISCORD_TOKENS[BOT_MODE]
 extensions_dict = {  # cogの導入
-    "default": ["ext_splat"]
+    "default": ["ext_splat", "ext_tool"],
+    "add":[]
 }
 
 description = "stat.inkへ戦績自動アップロードを行うbotです。\n"+\

@@ -216,7 +216,7 @@ async def checkAcc(ctx: commands.Context, acc_name: str, access_info={}):
 
 # ## upload functions
 
-async def _asyncio_run(cmd: str, ctx=None):
+async def asyncio_run(cmd: str, ctx=None, flag_alwaysSend=False):
     proc = await asyncio.create_subprocess_shell(
         cmd,
         stdout=asyncio.subprocess.PIPE,
@@ -231,7 +231,7 @@ async def _asyncio_run(cmd: str, ctx=None):
         print(f"[stdout]\n{stdout.decode()}")
     if stderr:
         print(f"[stderr]\n{stderr.decode()}")
-    if proc.returncode !=0 and isinstance(ctx, commands.Context):        
+    if (flag_alwaysSend is True or proc.returncode !=0) and isinstance(ctx, commands.Context):        
         await ctx.channel.send(text_content)
 
         #content=f"Error occured:\n\n```bash\n# stderr\n{stderr.decode()}\n```"
@@ -260,7 +260,7 @@ async def _upload_iksm(config_name: str, config_dir: str, config_config_dir: str
         return
     cmd = " ".join(["python3", splat_script, splat_option])
     sys.stdout.flush()
-    await _asyncio_run(cmd, ctx)
+    await asyncio_run(cmd, ctx)
     
     shutil.copy(f"{config_config_dir}/config.txt",
                 f"{config_dir}/{config_name}")
