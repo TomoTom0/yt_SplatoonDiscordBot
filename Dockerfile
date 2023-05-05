@@ -1,7 +1,5 @@
 FROM python:3.8
-RUN sudo apt update && \
-    sudo apt upgrade -y && \
-    sudo apt install -y git
+
 WORKDIR /app
 RUN git clone https://github.com/frozenpandaman/s3s.git && \
     pip install -r requirements.txt && \
