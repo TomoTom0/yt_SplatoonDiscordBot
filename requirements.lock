@@ -24,6 +24,7 @@ attrs==25.3.0
     # via aiohttp
 beautifulsoup4==4.13.4
     # via bs4
+    # via yt-splatoondiscordbot
 bs4==0.0.2
     # via yt-splatoondiscordbot
 certifi==2025.4.26
@@ -38,11 +39,17 @@ frozenlist==1.5.0
 idna==3.10
     # via requests
     # via yarl
+msgpack-python==0.5.6
+    # via yt-splatoondiscordbot
 multidict==6.1.0
     # via aiohttp
     # via yarl
+packaging==25.0
+    # via yt-splatoondiscordbot
 propcache==0.2.0
     # via yarl
+pymmh3==0.0.5
+    # via yt-splatoondiscordbot
 requests==2.32.3
     # via yt-splatoondiscordbot
 soupsieve==2.7

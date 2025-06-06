@@ -10,7 +10,7 @@ async def upload_once():
     """Upload new Splatoon 3 stats once using s3s script."""
     # Determine s3s script path
     base_dir = Path(__file__).parent.parent
-    script_path = base_dir / 's3s' / 's3s.py'
+    script_path = (base_dir / 's3s' / 's3s.py').resolve()
     if not script_path.exists():
         logging.error(f"s3s script not found at {script_path}")
         return

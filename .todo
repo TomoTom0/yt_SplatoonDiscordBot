@@ -3,12 +3,12 @@
 - [x] `?Hello`とDiscordで入力すると、Botが`Hello!`と返す単純なBotを作成する。
 - [x] Discord Botで複数回のやり取りを経て、指定した範囲の乱数を指定した個数だけ生成するコマンドを実装する。
 - [x] Disocrd Botのコマンドの結果書き換えられるファイルは基本的にdata配下とs3sがgit pullされるだけである
-- [ ] Discord Botを介してs3sの登録作業を行えるようにする。まずは登録作業における入力と表示項目を洗い出して、doc/design/register_s3s.mdにまとめよ。
+- [x] Discord Botを介してs3sの登録作業を行えるようにする。まずは登録作業における入力と表示項目を洗い出して、doc/design/register_s3s.mdにまとめよ。
   その際、元のどのファイルのどの部分と対応するかを明確にせよ。
 
 # まだ実行しない
 
-- [ ] frozenpandaman/s3sの初期登録をDiscord Botを介して行えるようにする。
+- [x] frozenpandaman/s3sの初期登録をDiscord Botを介して行えるようにする。
 - [ ] 定期的な戦績アップロードを実装する。
 - [ ] Discord Botのコマンドで手動アップロードを実装する。
 - [ ] frozenpandaman/s3sのupdateをsubprocessで実行できるようにする。
