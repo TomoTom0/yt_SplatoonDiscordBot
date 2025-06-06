@@ -1,7 +1,8 @@
-.*
 memo*
 config*/*.json
 config*/*.txt
+.idea
+ignore*
 
 
 # Byte-compiled / optimized / DLL files

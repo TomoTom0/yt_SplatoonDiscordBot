@@ -1,0 +1,6 @@
+[submodule "s3s"]
+	path = s3s
+	url = https://github.com/frozenpandaman/s3s.git
+[submodule "splatnet2statink"]
+	path = splatnet2statink
+	url = https://github.com/frozenpandaman/splatnet2statink.git
