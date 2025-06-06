@@ -3,6 +3,7 @@ config*/*.json
 config*/*.txt
 .idea
 ignore*
+.env
 
 
 # Byte-compiled / optimized / DLL files
